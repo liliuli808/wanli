@@ -1,0 +1,87 @@
+<style>
+  .styles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:24px; }
+  .style-card { background:#fff; border:1px solid #d8d0c3; border-radius:17px; overflow:hidden; cursor:pointer; transition:.18s ease; }
+  .style-card:hover { transform:translateY(-3px); box-shadow:0 13px 30px rgba(28,22,15,.13); }
+  .style-card.selected { outline:3px solid #946129; }
+  .sample { min-height:335px; padding:12px; font-size:10px; }
+  .sample .bar { display:flex; justify-content:space-between; padding:7px 8px; border-radius:6px; }
+  .sample .grid { display:grid; grid-template-columns:1fr 1.45fr 1fr; gap:7px; margin-top:8px; }
+  .sample .rail { display:flex; flex-direction:column; gap:6px; }
+  .sample .person,.sample .facts { border-radius:6px; padding:7px; }
+  .sample .person strong { display:block; }
+  .sample .stage-item { min-height:190px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .sample .icon { font-size:47px; margin:8px 0; }
+  .sample .price { font-size:19px; font-weight:700; margin-top:7px; }
+  .sample .timer { height:4px; width:72%; margin-top:7px; border-radius:4px; overflow:hidden; }
+  .sample .timer::after { content:""; display:block; height:100%; width:62%; }
+  .sample .actions { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-top:7px; }
+  .sample .button { border-radius:5px; padding:7px 3px; text-align:center; }
+  .sample h5 { margin:0 0 6px; font-size:9px; text-transform:uppercase; letter-spacing:.1em; }
+  .copy { padding:15px 16px 17px; }
+  .copy h3 { margin:0 0 6px; }
+  .copy p { margin:0; color:#6e675d; font-size:14px; line-height:1.5; }
+  .badge { display:inline-block; color:#704616; background:#f1ddbc; border-radius:999px; font-size:11px; padding:3px 8px; margin-bottom:8px; }
+
+  .brass { background:linear-gradient(145deg,#151310,#241d17); color:#e9dfce; font-family:Georgia,"Noto Serif SC",serif; }
+  .brass .bar,.brass .person,.brass .facts { background:#2b241e; border:1px solid #483b2f; }
+  .brass .stage-item { background:radial-gradient(circle,#513821,#211b16 68%); border:1px solid #6b5538; }
+  .brass .icon,.brass .price,.brass h5 { color:#ddb46e; }
+  .brass .timer { background:#514335; }.brass .timer::after { background:#b96e45; }
+  .brass .button { background:#3b3024;border:1px solid #6d5535; }.brass .button.main { background:#a06a2f; }
+
+  .velvet { background:linear-gradient(145deg,#241014,#4a1821); color:#f4e7dc; font-family:Georgia,"Songti SC",serif; }
+  .velvet .bar,.velvet .person,.velvet .facts { background:#551f29; border:1px solid #815242; box-shadow:inset 0 0 0 1px #2b0d13; }
+  .velvet .stage-item { background:radial-gradient(circle,#7a4931,#3f141c 70%); border:1px solid #c3a06a; box-shadow:inset 0 0 24px #1a070a; }
+  .velvet .icon,.velvet .price,.velvet h5 { color:#efd39a; }
+  .velvet .timer { background:#371017; }.velvet .timer::after { background:#e1b35f; }
+  .velvet .button { background:#531b26;border:1px solid #a27951; }.velvet .button.main { background:#b1843f;color:white; }
+
+  .cold { background:linear-gradient(145deg,#0b1518,#10252a); color:#dce9e8; font-family:Inter,"Noto Sans SC",sans-serif; }
+  .cold .bar,.cold .person,.cold .facts { background:#132c31; border:1px solid #26515a; }
+  .cold .stage-item { background:radial-gradient(circle,#173f45,#0b1d21 68%); border:1px solid #3b707a; }
+  .cold .icon,.cold .price,.cold h5 { color:#7ed5ce; }
+  .cold .timer { background:#1f444a; }.cold .timer::after { background:#e16e61; }
+  .cold .button { background:#18343a;border:1px solid #32616a; }.cold .button.main { background:#208a87;color:white; }
+  @media(max-width:980px){.styles{grid-template-columns:1fr}}
+</style>
+
+<h2>《午夜拍卖行》的视觉气质</h2>
+<p class="subtitle">三种方案都沿用 A1 双侧栏布局，只改变色彩、字体和质感。点击选择最符合世界观的一种。</p>
+
+<div class="styles">
+  <div class="style-card" data-choice="noir-brass" onclick="toggleSelect(this)">
+    <div class="sample brass">
+      <div class="bar"><span>第 4 日 · 黑曜厅</span><span>现金 ¥12,400</span></div>
+      <div class="grid">
+        <div class="rail"><div class="person"><strong>陈默</strong>立即举牌</div><div class="person"><strong>白夫人</strong>正在观察你</div><div class="person"><strong>收藏家 07</strong>保持沉默</div></div>
+        <div><div class="stage-item"><span>第 17 号拍品</span><span class="icon">♬</span><strong>鎏金夜莺音乐盒</strong><span class="price">¥ 6,800</span><span class="timer"></span></div><div class="actions"><span class="button">沉默</span><span class="button main">加价</span><span class="button">跳价</span></div></div>
+        <div class="facts"><h5>已知事实</h5>螺丝曾被更换<br><br>出处记录缺失<br><br>配套钥匙已出现</div>
+      </div>
+    </div>
+    <div class="copy"><span class="badge">推荐</span><h3>A · 黑金侦探</h3><p>木炭黑、黄铜与琥珀灯光。既有旧拍卖厅气氛，又能靠UI质感降低场景美术需求。</p></div>
+  </div>
+
+  <div class="style-card" data-choice="velvet-gothic" onclick="toggleSelect(this)">
+    <div class="sample velvet">
+      <div class="bar"><span>第四夜 · 绯红厅</span><span>风险 18%</span></div>
+      <div class="grid">
+        <div class="rail"><div class="person"><strong>陈默</strong>立即举牌</div><div class="person"><strong>白夫人</strong>正在观察你</div><div class="person"><strong>收藏家 07</strong>保持沉默</div></div>
+        <div><div class="stage-item"><span>LOT XVII</span><span class="icon">♬</span><strong>鎏金夜莺音乐盒</strong><span class="price">¥ 6,800</span><span class="timer"></span></div><div class="actions"><span class="button">沉默</span><span class="button main">举牌</span><span class="button">离席</span></div></div>
+        <div class="facts"><h5>调查记录</h5>螺丝曾被更换<br><br>出处记录缺失<br><br>配套钥匙已出现</div>
+      </div>
+    </div>
+    <div class="copy"><h3>B · 酒红哥特</h3><p>天鹅绒、烛光与古典装饰，神秘感最强；但装饰性素材和插画一致性要求更高。</p></div>
+  </div>
+
+  <div class="style-card" data-choice="cold-black-market" onclick="toggleSelect(this)">
+    <div class="sample cold">
+      <div class="bar"><span>BLACKROOM / DAY 04</span><span>¥12,400 · HEAT 18%</span></div>
+      <div class="grid">
+        <div class="rail"><div class="person"><strong>CHEN</strong>FAST BID / HIGH</div><div class="person"><strong>BAI</strong>WATCHING YOU</div><div class="person"><strong>USER_07</strong>NO SIGNAL</div></div>
+        <div><div class="stage-item"><span>LOT_017</span><span class="icon">♬</span><strong>夜莺音乐盒</strong><span class="price">¥ 6,800</span><span class="timer"></span></div><div class="actions"><span class="button">WAIT</span><span class="button main">BID</span><span class="button">JUMP</span></div></div>
+        <div class="facts"><h5>KNOWN DATA</h5>SCREWS REPLACED<br><br>PROVENANCE GAP<br><br>MATCHING KEY FOUND</div>
+      </div>
+    </div>
+    <div class="copy"><h3>C · 冷色地下交易</h3><p>现代、克制、数据化，开发成本最低且信息清楚；但古董拍卖的年代感最弱。</p></div>
+  </div>
+</div>

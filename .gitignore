@@ -1,0 +1,30 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+
+# Docker
+.docker/
+
+# Temp
+*.tmp
+.cache/
+
+# Android 构建产物（~400MB，不入库）
+build/
+.gradle/
+local.properties
+
+# 发布工具含 keystore 口令，勿入库
+gen_keystore.sh

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 预留给启动画面/图标等着色场景 -->
+    <color name="sage_primary">#FF436645</color>
+    <color name="cream_background">#FFFCF9F8</color>
+</resources>

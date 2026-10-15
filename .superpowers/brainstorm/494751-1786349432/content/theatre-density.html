@@ -1,0 +1,83 @@
+<style>
+  .pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; margin-top:24px; }
+  .choice { border:1px solid #d7cfc0; border-radius:17px; overflow:hidden; background:white; cursor:pointer; transition:.18s ease; }
+  .choice:hover { transform:translateY(-3px); box-shadow:0 14px 34px rgba(32,25,16,.13); }
+  .choice.selected { outline:3px solid #96622b; }
+  .stage { min-height:390px; padding:13px; background:linear-gradient(145deg,#171411,#211b17); color:#eee4d1; font-size:11px; }
+  .top { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#2a231d; border:1px solid #42372c; border-radius:7px; color:#cab898; }
+  .body { display:grid; grid-template-columns:1fr 1.6fr 1fr; gap:9px; margin-top:10px; }
+  .rail { display:flex; flex-direction:column; gap:7px; }
+  .panel { padding:9px; border:1px solid #44382c; background:#28221d; border-radius:8px; color:#d5c7b2; }
+  .panel h4 { margin:0 0 7px; color:#d6a75f; text-transform:uppercase; letter-spacing:.08em; font-size:9px; }
+  .person { display:grid; grid-template-columns:27px 1fr; gap:7px; align-items:center; padding:7px; border-radius:7px; background:#2c251f; border-left:3px solid #78603e; }
+  .face { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:#50402f; font-size:14px; }
+  .person strong { display:block; font-size:11px; }
+  .tell { color:#c6a26d; font-size:9px; }
+  .lot { min-height:235px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; border-radius:10px; border:1px solid #6b563a; background:radial-gradient(circle at 50% 42%,#50371f 0,#282019 46%,#1c1815 100%); }
+  .lot .icon { font-size:58px; color:#d9b370; margin:8px 0; }
+  .label { color:#c99d5e; text-transform:uppercase; font-size:9px; letter-spacing:.11em; }
+  .amount { font-size:22px; color:#ffd58b; font-weight:700; margin-top:8px; }
+  .clock { width:72%; height:5px; background:#514436; border-radius:5px; overflow:hidden; margin-top:8px; }
+  .clock::after { content:""; display:block; width:63%; height:100%; background:#bd7149; }
+  .facts p { margin:0 0 7px; padding-bottom:6px; border-bottom:1px solid #3e352c; }
+  .facts p:last-child { border:0; }
+  .buttons { display:grid; grid-template-columns:1fr 1.25fr 1fr; gap:7px; margin-top:10px; }
+  .btn { border:1px solid #6e5535; background:#3b3025; color:#e9dcc6; padding:9px 6px; border-radius:7px; text-align:center; }
+  .btn.main { background:#9e672c; border-color:#c58b46; color:white; }
+  .drawer { margin-top:8px; padding:9px 11px; border-radius:8px; background:#302820; border:1px solid #4a3c30; display:flex; justify-content:space-between; color:#d4c4aa; }
+  .hint { padding:14px 16px 17px; }
+  .hint h3 { margin:0 0 6px; }
+  .hint p { margin:0; color:#6c645a; line-height:1.5; font-size:14px; }
+  .badge { display:inline-block; margin-bottom:8px; padding:3px 8px; font-size:11px; border-radius:999px; color:#704615; background:#f0ddbc; }
+  @media(max-width:900px){.pair{grid-template-columns:1fr}}
+</style>
+
+<h2>A「剧场式」应该保留多少常驻信息？</h2>
+<p class="subtitle">你在浏览器中也查看了分析台式布局，因此这里比较“气氛优先”和“信息始终可见”的两种剧场版细化。</p>
+
+<div class="pair">
+  <div class="choice" data-choice="hybrid-rails" onclick="toggleSelect(this)">
+    <div class="stage">
+      <div class="top"><span>第 4 日 · 黑曜厅</span><span>现金 ¥12,400　风险 18%</span></div>
+      <div class="body">
+        <div class="rail">
+          <div class="person"><span class="face">陈</span><span><strong>陈默</strong><span class="tell">立即举牌 · 需求强</span></span></div>
+          <div class="person"><span class="face">白</span><span><strong>白夫人</strong><span class="tell">正在观察你</span></span></div>
+          <div class="person"><span class="face">07</span><span><strong>收藏家 07</strong><span class="tell">跟风倾向高</span></span></div>
+          <div class="panel"><h4>关系</h4>陈默：警惕<br>白夫人：友善<br>07：中立</div>
+        </div>
+        <div>
+          <div class="lot"><span class="label">第 17 号拍品</span><span class="icon">♬</span><strong>鎏金夜莺音乐盒</strong><span class="amount">¥ 6,800</span><span class="clock"></span></div>
+          <div class="buttons"><div class="btn">沉默观察</div><div class="btn main">加价 ¥400</div><div class="btn">跳价 ¥1,500</div></div>
+        </div>
+        <div class="rail">
+          <div class="panel facts"><h4>已知事实</h4><p>螺丝曾被更换</p><p>1926 年前记录缺失</p><p>陈默持有配套钥匙</p></div>
+          <div class="panel"><h4>市场估值</h4>¥4,000–9,000<br><span class="tell">可信度 62%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="hint"><span class="badge">推荐</span><h3>A1 · 常驻双侧栏</h3><p>NPC状态和已知事实始终可见。适合策略阅读，界面稳定，但中央舞台稍小。</p></div>
+  </div>
+
+  <div class="choice" data-choice="focus-drawer" onclick="toggleSelect(this)">
+    <div class="stage">
+      <div class="top"><span>第 4 日 · 黑曜厅</span><span>现金 ¥12,400　落槌 04.2 秒</span></div>
+      <div class="body" style="grid-template-columns:.8fr 2.15fr .8fr;">
+        <div class="rail">
+          <div class="person"><span class="face">陈</span><span><strong>陈默</strong><span class="tell">紧盯拍品</span></span></div>
+          <div class="person"><span class="face">白</span><span><strong>白夫人</strong><span class="tell">向你微笑</span></span></div>
+          <div class="person"><span class="face">07</span><span><strong>07</strong><span class="tell">手指号码牌</span></span></div>
+        </div>
+        <div>
+          <div class="lot" style="min-height:260px;"><span class="label">最后一次</span><span class="icon" style="font-size:68px">♬</span><strong style="font-size:14px">鎏金夜莺音乐盒</strong><span class="amount">¥ 6,800</span><span class="clock"></span></div>
+          <div class="buttons"><div class="btn">保持沉默</div><div class="btn main">举牌</div><div class="btn">退出</div></div>
+        </div>
+        <div class="rail">
+          <div class="panel" style="text-align:center"><h4>快捷抽屉</h4>证据　3<br><br>估值　↗<br><br>关系　!</div>
+        </div>
+      </div>
+      <div class="drawer"><span>当前提示：陈默拥有与拍品配套的钥匙</span><span>打开案件板　›</span></div>
+    </div>
+    <div class="hint"><h3>A2 · 中央聚焦＋抽屉</h3><p>拍卖时只保留关键提示，详细证据按需展开。气氛更强，但玩家需要记忆或暂停查看。</p></div>
+  </div>
+</div>

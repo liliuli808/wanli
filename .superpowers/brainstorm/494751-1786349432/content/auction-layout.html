@@ -1,0 +1,107 @@
+<style>
+  .auction-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:24px; }
+  .auction-card { border:1px solid #d8d0c1; border-radius:16px; overflow:hidden; cursor:pointer; background:#fff; transition:.18s ease; }
+  .auction-card:hover { transform:translateY(-3px); box-shadow:0 12px 30px rgba(31,24,15,.12); }
+  .auction-card.selected { outline:3px solid #9d6c2f; }
+  .auction-shell { background:#171513; color:#efe7d7; min-height:330px; padding:12px; font-size:10px; }
+  .status { display:flex; justify-content:space-between; background:#26211c; padding:7px 9px; border-radius:7px; color:#cdbd9f; }
+  .tag { color:#d7ae69; text-transform:uppercase; letter-spacing:.08em; font-size:9px; }
+  .artifact { border:1px solid #66523a; background:radial-gradient(circle at 50% 45%,#46331f,#1f1b17 66%); border-radius:9px; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:135px; text-align:center; }
+  .artifact-icon { font-size:38px; filter:sepia(.4); margin-bottom:7px; }
+  .price { color:#ffd485; font-size:19px; font-weight:700; }
+  .timer { height:4px; background:#4c4032; border-radius:4px; overflow:hidden; margin-top:6px; width:76%; }
+  .timer::after { content:""; display:block; height:100%; width:58%; background:#c47a4e; }
+  .bidder { background:#29241f; border-left:3px solid #7d6240; padding:7px; border-radius:6px; margin-bottom:6px; }
+  .bidder strong { display:block; color:#f4dfbb; }
+  .reaction { color:#caa977; }
+  .actions { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px; }
+  .action { background:#5a4227; color:#f7e7c8; border-radius:6px; padding:7px 4px; text-align:center; }
+  .action.primary { background:#a56c2d; color:white; }
+  .mini-panel { background:#29241f; border-radius:7px; padding:8px; color:#cfc2ae; }
+  .card-copy { padding:15px 16px 17px; }
+  .card-copy h3 { margin:0 0 6px; }
+  .card-copy p { margin:0; color:#6f675d; font-size:14px; line-height:1.45; }
+  .badge { display:inline-block; color:#714716; background:#f2dfbf; border-radius:999px; font-size:11px; padding:3px 8px; margin-bottom:8px; }
+  @media (max-width: 980px) { .auction-grid { grid-template-columns:1fr; } }
+</style>
+
+<h2>哪种竞拍界面最符合《午夜拍卖行》？</h2>
+<p class="subtitle">重点比较：能否同时看清拍品、倒计时与NPC反应。点击选择一种布局。</p>
+
+<div class="auction-grid">
+  <div class="auction-card" data-choice="theatre" onclick="toggleSelect(this)">
+    <div class="auction-shell">
+      <div class="status"><span>第 4 日 · 黑曜厅</span><span>现金 ¥12,400 · 风险 18%</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1.55fr 1fr;gap:8px;margin-top:9px;">
+        <div>
+          <div class="bidder"><strong>陈默</strong><span class="reaction">紧盯拍品，立即举牌</span></div>
+          <div class="bidder"><strong>白夫人</strong><span class="reaction">正在观察你</span></div>
+          <div class="bidder"><strong>收藏家 07</strong><span class="reaction">预算不明</span></div>
+        </div>
+        <div class="artifact">
+          <div class="tag">第 17 号拍品</div>
+          <div class="artifact-icon">♬</div>
+          <strong>鎏金夜莺音乐盒</strong>
+          <div class="price">¥ 6,800</div>
+          <div class="timer"></div>
+        </div>
+        <div class="mini-panel">
+          <div class="tag">已知信息</div>
+          <p>螺丝曾被更换</p><p>1926 年前记录缺失</p><p>陈默拥有配套钥匙</p>
+        </div>
+      </div>
+      <div class="actions"><div class="action">保持沉默</div><div class="action primary">加价 ¥400</div><div class="action">跳价 ¥1,500</div></div>
+    </div>
+    <div class="card-copy">
+      <span class="badge">推荐</span>
+      <h3>A · 剧场式</h3>
+      <p>拍品位于舞台中央，竞拍者和线索分列两侧；气氛与信息密度最均衡。</p>
+    </div>
+  </div>
+
+  <div class="auction-card" data-choice="analyst" onclick="toggleSelect(this)">
+    <div class="auction-shell">
+      <div class="status"><span>案件板 / 拍品 / 竞拍者</span><span>落槌 04.2 秒</span></div>
+      <div style="display:grid;grid-template-columns:1.05fr 1.25fr 1.05fr;gap:7px;margin-top:9px;min-height:245px;">
+        <div class="mini-panel">
+          <div class="tag">证据板</div>
+          <p>✓ 旧报纸：夜莺商标</p><p>○ 失踪作曲家照片</p><p>△ 可疑维修单</p><hr style="border-color:#494036"><p>推断可信度 62%</p>
+        </div>
+        <div class="artifact">
+          <div class="artifact-icon">♬</div><strong>鎏金夜莺音乐盒</strong><div class="price">¥ 6,800</div><div class="timer"></div>
+        </div>
+        <div class="mini-panel">
+          <div class="tag">竞拍者矩阵</div>
+          <p>陈默：需求高 / 资金中</p><p>白夫人：需求未知</p><p>07：跟风倾向高</p><hr style="border-color:#494036"><p>市场估值 ¥4,000–9,000</p>
+        </div>
+      </div>
+      <div class="actions"><div class="action">质疑出处</div><div class="action primary">跟价</div><div class="action">退出</div></div>
+    </div>
+    <div class="card-copy">
+      <h3>B · 分析台式</h3>
+      <p>所有证据与数值同时呈现，最利于硬核推理，但容易像管理软件，拍卖气氛较弱。</p>
+    </div>
+  </div>
+
+  <div class="auction-card" data-choice="cinematic" onclick="toggleSelect(this)">
+    <div class="auction-shell">
+      <div class="status"><span>第 17 号拍品</span><span>¥ 6,800</span></div>
+      <div class="artifact" style="min-height:205px;margin-top:9px;">
+        <div class="tag">最后一次 · 即将落槌</div>
+        <div class="artifact-icon" style="font-size:56px;">♬</div>
+        <strong style="font-size:14px;">鎏金夜莺音乐盒</strong>
+        <div class="timer"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:7px;">
+        <div class="bidder"><strong>陈默</strong><span class="reaction">咬紧牙关</span></div>
+        <div class="bidder"><strong>白夫人</strong><span class="reaction">向你微笑</span></div>
+        <div class="bidder"><strong>07</strong><span class="reaction">准备举牌</span></div>
+      </div>
+      <div class="actions"><div class="action">线索</div><div class="action primary">举牌</div><div class="action">退出</div></div>
+    </div>
+    <div class="card-copy">
+      <h3>C · 电影式聚焦</h3>
+      <p>视觉冲击和紧张感最好，信息收进抽屉与标签页；适合手柄，但分析时切换较多。</p>
+    </div>
+  </div>
+</div>

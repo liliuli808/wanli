@@ -1,0 +1,134 @@
+# 碗里全栈编排：Postgres + Redis + MinIO + Go 后端（+ 可选 Cloudflare Tunnel）
+#
+# 日常开发（本地 go run 后端，只用容器跑基础设施）：
+#   docker compose up -d postgres redis minio
+#
+# 生产/整机部署（先在本目录创建 .env，参考 .env.example）：
+#   docker compose up -d                    # 全部服务
+#   docker compose --profile tunnel up -d   # 含 Cloudflare Tunnel 暴露公网
+#
+# 所有端口只绑定 127.0.0.1，公网访问只经由 cloudflared 出站隧道，无需开放路由器端口。
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: wanli-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: wanli_db
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wanli_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: wanli-redis
+    # 宿主机映射 6380（容器内仍是 6379），兼容本地开发 .env 的 REDIS_PORT=6380
+    ports:
+      - "127.0.0.1:6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: wanli-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build: ./backend-go
+    container_name: wanli-backend
+    environment:
+      PORT: "8080"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: wanli_db
+      DB_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      S3_ENDPOINT: minio:9000
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-127.0.0.1:9000}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_BUCKET: wanli-assets
+      S3_USE_SSL: "false"
+      S3_PUBLIC_USE_SSL: ${S3_PUBLIC_USE_SSL:-false}
+      JWT_SECRET: ${JWT_SECRET:?请在 wanli/.env 中设置 JWT_SECRET（强随机字符串）}
+      JWT_EXPIRY_HOURS: "168"
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com/v1}
+      AI_MODEL: ${AI_MODEL:-deepseek-chat}
+      # AI 池：base_url|api_key|model;base_url2|api_key2|model2（model 可省略回落 AI_MODEL）
+      AI_PROVIDERS: ${AI_PROVIDERS:-}
+      AI_POOL_COOLDOWN_SECONDS: ${AI_POOL_COOLDOWN_SECONDS:-60}
+      BILIBILI_COOKIE: ${BILIBILI_COOKIE:-}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      AUTH_MAX_FAILURES: ${AUTH_MAX_FAILURES:-5}
+      AUTH_LOCKOUT_MINUTES: ${AUTH_LOCKOUT_MINUTES:-15}
+    # 宿主机映射 8081（容器内仍是 8080）：8080 被本机其他服务占用，
+    # 且 Android 端 app/src/main/assets/config.properties 已指向 10.0.2.2:8081
+    ports:
+      - "127.0.0.1:8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Cloudflare Tunnel：把 backend 和 MinIO 暴露到公网（出站连接，无需公网 IP/端口转发）
+  # 需要：域名托管在 Cloudflare + Zero Trust 面板创建 Tunnel 拿到 token
+  # 配置两个 Public Hostname：
+  #   api.你的域名    -> http://backend:8080
+  #   assets.你的域名 -> http://minio:9000   （成品图公开访问）
+  # 然后 .env 中设置 TUNNEL_TOKEN、S3_PUBLIC_ENDPOINT=assets.你的域名、S3_PUBLIC_USE_SSL=true
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: wanli-cloudflared
+    command: tunnel --no-autoupdate --protocol http2 run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?请在 wanli/.env 中设置 TUNNEL_TOKEN}
+      # 后量子 TLS（MLKEM）ClientHello 在当前网络路径上会被中间设备掐断握手（EOF），
+      # 必须关闭；见 2026-10-14 排查：关掉后 tunnel 立即 Registered
+      TUNNEL_POST_QUANTUM: "false"
+    profiles:
+      - tunnel
+    depends_on:
+      - backend
+      - minio
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:

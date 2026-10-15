@@ -1,0 +1,65 @@
+<style>
+  .treatments { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:24px; }
+  .treatment { border:1px solid #d8d0c3; border-radius:17px; overflow:hidden; background:white; cursor:pointer; transition:.18s ease; }
+  .treatment:hover { transform:translateY(-3px); box-shadow:0 14px 32px rgba(31,23,17,.14); }
+  .treatment.selected { outline:3px solid #8d2b3a; }
+  .gallery { min-height:340px; padding:14px; color:#f1e4d7; background:linear-gradient(145deg,#250e14,#501925); }
+  .gallery-head { display:flex; justify-content:space-between; color:#e5c58b; font-family:Georgia,serif; font-size:10px; text-transform:uppercase; letter-spacing:.09em; }
+  .portrait-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0; }
+  .portrait { aspect-ratio:1/1.12; border-radius:50% 50% 43% 43%; overflow:hidden; display:grid; place-items:center; position:relative; }
+  .portrait span { position:absolute; bottom:7px; left:0; right:0; text-align:center; font-size:9px; }
+  .object-frame { min-height:170px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+  .object-frame strong { margin-top:8px; font-family:Georgia,"Songti SC",serif; }
+  .desc { padding:15px 16px 17px; }
+  .desc h3 { margin:0 0 6px; }
+  .desc p { margin:0; color:#6d655c; font-size:14px; line-height:1.5; }
+  .badge { display:inline-block; margin-bottom:8px; padding:3px 8px; border-radius:999px; background:#f0ddbc; color:#704616; font-size:11px; }
+
+  .etch .portrait { background:#e9d7b7; border:3px double #b78b55; color:#332118; }
+  .etch .portrait::before { content:""; width:50%; height:58%; border-radius:48% 48% 42% 42%; background:#3a291e; box-shadow:0 16px 0 8px #3a291e; transform:translateY(-6px); }
+  .etch .object-frame { color:#332118; border:5px double #b68b56; background:repeating-linear-gradient(12deg,#ead9b9 0,#ead9b9 3px,#dfc9a4 4px); }
+  .etch .music { font-size:64px; text-shadow:2px 2px #b69160; }
+
+  .paint .portrait { border:2px solid #d0a76a; background:radial-gradient(circle at 45% 32%,#d2a188 0 16%,#664637 18% 36%,#1f1716 57%); box-shadow:inset 0 0 16px #14080c; }
+  .paint .object-frame { border:2px solid #d0a76a; background:radial-gradient(circle at 50% 38%,#9c6235,#32141b 58%,#19090d); box-shadow:inset 0 0 28px #120609; }
+  .paint .music { font-size:68px; color:#f1c777; filter:drop-shadow(0 9px 7px #100507); }
+
+  .collage .portrait { background:#d9a163; border:3px solid #2b1620; box-shadow:5px 5px 0 #1c0c12; transform:rotate(-2deg); }
+  .collage .portrait:nth-child(2){ background:#9d5361; transform:rotate(2deg); }.collage .portrait:nth-child(3){ background:#6d8c86; transform:rotate(-1deg); }
+  .collage .portrait::before { content:""; width:45%; height:55%; background:#24131a; clip-path:polygon(50% 0,82% 22%,90% 65%,68% 100%,28% 92%,8% 52%,18% 18%); }
+  .collage .object-frame { border:3px solid #24131a; background:linear-gradient(135deg,#d2a15d 0 44%,#9c4a57 45% 68%,#294d4c 69%); box-shadow:7px 7px 0 #18080d; }
+  .collage .music { font-size:67px; color:#1e1016; transform:rotate(-4deg); }
+  @media(max-width:980px){.treatments{grid-template-columns:1fr}}
+</style>
+
+<h2>人物与拍品采用哪种插画风格？</h2>
+<p class="subtitle">界面已经确定为酒红哥特。这里仅比较内容素材的表现方式与单人开发成本。</p>
+
+<div class="treatments">
+  <div class="treatment" data-choice="etching" onclick="toggleSelect(this)">
+    <div class="gallery etch">
+      <div class="gallery-head"><span>竞拍者档案</span><span>铜版蚀刻</span></div>
+      <div class="portrait-row"><div class="portrait"><span>陈默</span></div><div class="portrait"><span>白夫人</span></div><div class="portrait"><span>收藏家 07</span></div></div>
+      <div class="object-frame"><span class="music">♬</span><strong>鎏金夜莺音乐盒 · 1926</strong></div>
+    </div>
+    <div class="desc"><span class="badge">推荐</span><h3>A · 铜版蚀刻</h3><p>单色线稿、旧纸和剪影。辨识度高，容易保持AI生成素材的一致性，也方便统一调色。</p></div>
+  </div>
+
+  <div class="treatment" data-choice="oil-painting" onclick="toggleSelect(this)">
+    <div class="gallery paint">
+      <div class="gallery-head"><span>竞拍者档案</span><span>暗色油画</span></div>
+      <div class="portrait-row"><div class="portrait"><span>陈默</span></div><div class="portrait"><span>白夫人</span></div><div class="portrait"><span>收藏家 07</span></div></div>
+      <div class="object-frame"><span class="music">♬</span><strong>鎏金夜莺音乐盒 · 1926</strong></div>
+    </div>
+    <div class="desc"><h3>B · 暗色油画</h3><p>最华丽、最有收藏品质感，适合商店截图；但人物与拍品的一致性、细节修正成本最高。</p></div>
+  </div>
+
+  <div class="treatment" data-choice="theatre-collage" onclick="toggleSelect(this)">
+    <div class="gallery collage">
+      <div class="gallery-head"><span>竞拍者档案</span><span>剧场拼贴</span></div>
+      <div class="portrait-row"><div class="portrait"><span>陈默</span></div><div class="portrait"><span>白夫人</span></div><div class="portrait"><span>收藏家 07</span></div></div>
+      <div class="object-frame"><span class="music">♬</span><strong>鎏金夜莺音乐盒 · 1926</strong></div>
+    </div>
+    <div class="desc"><h3>C · 剧场拼贴</h3><p>剪纸、旧照片和几何色块，个性最鲜明；动画容易处理，但会弱化古董的真实鉴定感。</p></div>
+  </div>
+</div>

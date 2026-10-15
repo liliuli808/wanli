@@ -1,0 +1,69 @@
+<style>
+  .final-wrap { max-width:1120px; margin:22px auto 0; }
+  .final-screen { padding:16px; border-radius:18px; color:#f5e8dc; background:linear-gradient(145deg,#230d13,#521a26 58%,#321019); border:1px solid #8f5d50; box-shadow:0 24px 60px rgba(55,13,23,.28); font-family:Georgia,"Songti SC",serif; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(#622432,#491923); border:1px solid #a9795b; border-radius:9px; padding:10px 13px; color:#ecd5af; box-shadow:inset 0 0 0 1px #2a0b11; }
+  .brand { letter-spacing:.15em; font-size:13px; text-transform:uppercase; }.meters { display:flex; gap:20px; font-size:11px; }
+  .layout { display:grid; grid-template-columns:1fr 1.62fr 1fr; gap:11px; margin-top:12px; }
+  .rail { display:flex; flex-direction:column; gap:8px; }
+  .bidder { display:grid; grid-template-columns:50px 1fr; gap:9px; align-items:center; padding:8px; border-radius:9px; border:1px solid #855645; background:linear-gradient(135deg,#5e2230,#36131b); box-shadow:inset 0 0 12px #220b10; }
+  .portrait { width:48px; height:56px; border-radius:50% 50% 44% 44%; border:2px solid #c89d65; background:radial-gradient(circle at 47% 30%,#d1a18a 0 15%,#6d483b 17% 35%,#1f1616 58%); box-shadow:inset 0 0 13px #12070a; }
+  .bidder strong { display:block; color:#f4ddbc; font-size:12px; }.tell { display:block; margin-top:3px; color:#d8ad78; font-size:9px; }
+  .relation { display:flex; justify-content:space-between; margin-top:4px; font-size:9px; color:#bd9e91; }
+  .panel { padding:10px; border-radius:9px; border:1px solid #835747; background:linear-gradient(145deg,#501c28,#321018); box-shadow:inset 0 0 15px #21080f; }
+  .panel h4 { margin:0 0 8px; color:#e6bd7f; font-size:9px; letter-spacing:.13em; text-transform:uppercase; }
+  .fact { padding:7px 0; border-bottom:1px solid #683643; color:#eadccf; font-size:10px; }.fact:last-child{border:0}.fact em{display:block;color:#bb9789;font-size:8px;margin-top:2px}
+  .lot { position:relative; min-height:335px; border-radius:12px; border:2px solid #c6a16d; background:radial-gradient(circle at 50% 38%,#955a3b 0,#4b1922 48%,#240a10 78%); box-shadow:inset 0 0 45px #170409,0 10px 25px #1a070b; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; }
+  .lot::before,.lot::after{content:"";position:absolute;inset:10px;border:1px solid rgba(228,190,129,.26);border-radius:8px}.lot::after{inset:15px;border-style:dotted}
+  .lot-no { color:#e2ba7d; letter-spacing:.16em; font-size:9px; text-transform:uppercase; }
+  .painting { width:66%; max-width:290px; filter:drop-shadow(0 12px 12px #130509); margin:5px 0; }
+  .lot strong { font-size:15px; color:#fae8d3; }.price { font-size:25px; color:#f5ce82; font-weight:700; margin-top:7px; }.range{color:#bc9483;font-size:9px;margin-top:2px}
+  .clock { width:68%; height:6px; background:#38121a; border:1px solid #74404a; border-radius:8px; overflow:hidden; margin-top:10px; }.clock span{display:block;width:64%;height:100%;background:linear-gradient(90deg,#c87558,#e6bd69)}
+  .actions { display:grid; grid-template-columns:1fr 1.25fr 1fr; gap:8px; margin-top:10px; }.action{padding:10px 7px;text-align:center;border-radius:7px;border:1px solid #986d4d;background:#4b1d26;color:#ead8c2;font-size:10px}.action.main{background:linear-gradient(#b18447,#7c4c29);border-color:#e0ba76;color:white;font-weight:700}
+  .summary { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px; }.note{padding:10px;border-radius:8px;background:#f4eadf;color:#59323a;font-family:Inter,"Noto Sans SC",sans-serif;font-size:11px;line-height:1.45}.note strong{display:block;color:#7b2738;margin-bottom:3px}
+  .confirm-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px; }.confirm { border:1px solid #d6c9b9; border-radius:12px; padding:14px 16px; cursor:pointer; background:white; transition:.17s ease; }.confirm:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(49,31,21,.12)}.confirm.selected{outline:3px solid #8c2a3a}.confirm h3{margin:0 0 4px}.confirm p{margin:0;color:#746a60;font-size:13px}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.confirm-row{grid-template-columns:1fr}}
+</style>
+
+<h2>最终视觉方向确认</h2>
+<p class="subtitle">A1 双侧栏布局＋酒红哥特界面＋暗色油画人物与拍品。</p>
+
+<div class="final-wrap">
+  <div class="final-screen">
+    <div class="topbar"><span class="brand">Midnight Auction · 黑曜厅</span><div class="meters"><span>第 4 日 / 剩余 6 日</span><span>现金 ¥12,400</span><span>调查风险 18%</span></div></div>
+    <div class="layout">
+      <div class="rail">
+        <div class="bidder"><span class="portrait"></span><span><strong>陈默</strong><span class="tell">紧盯拍品，立即举牌</span><span class="relation"><b>警惕</b><b>需求强</b></span></span></div>
+        <div class="bidder"><span class="portrait" style="background:radial-gradient(circle at 48% 30%,#d8a69b 0 15%,#513b42 17% 36%,#181217 59%)"></span><span><strong>白夫人</strong><span class="tell">没有看拍品，她在观察你</span><span class="relation"><b>友善</b><b>意图不明</b></span></span></div>
+        <div class="bidder"><span class="portrait" style="background:radial-gradient(circle at 50% 32%,#b98973 0 14%,#292829 17% 38%,#0f1011 60%)"></span><span><strong>收藏家 07</strong><span class="tell">手指反复敲击号码牌</span><span class="relation"><b>中立</b><b>跟风型</b></span></span></div>
+        <div class="panel"><h4>竞拍关系</h4><div class="fact">陈默曾被你哄抬两次<em>他可能提前退出，让你接盘</em></div><div class="fact">白夫人欠你一个人情<em>可用于一次拍后交换</em></div></div>
+      </div>
+      <div>
+        <div class="lot">
+          <span class="lot-no">Lot XVII · 最后一次</span>
+          <svg class="painting" viewBox="0 0 320 180" aria-label="鎏金夜莺音乐盒油画示意">
+            <defs><radialGradient id="wood" cx="45%" cy="30%"><stop offset="0" stop-color="#b7793d"/><stop offset=".55" stop-color="#6e351f"/><stop offset="1" stop-color="#291113"/></radialGradient><linearGradient id="gold" x1="0" x2="1"><stop stop-color="#fff0a3"/><stop offset=".45" stop-color="#bb742b"/><stop offset=".75" stop-color="#f0ca72"/><stop offset="1" stop-color="#704019"/></linearGradient></defs>
+            <ellipse cx="160" cy="153" rx="112" ry="17" fill="#17080b" opacity=".7"/>
+            <path d="M63 79 L253 79 L276 112 L252 147 L67 147 L44 112 Z" fill="url(#wood)" stroke="#d5a65b" stroke-width="4"/>
+            <path d="M70 79 Q160 22 247 79 L235 105 Q160 68 80 105 Z" fill="#7a3f25" stroke="#e0b767" stroke-width="4"/>
+            <path d="M151 74 Q152 41 174 37 Q189 36 197 47 Q178 49 176 61 Q189 61 198 71 Q179 72 170 84 Z" fill="url(#gold)" stroke="#6d3617" stroke-width="2"/>
+            <path d="M174 41 Q159 24 145 34 Q156 38 158 51" fill="none" stroke="#e4c271" stroke-width="4"/>
+            <circle cx="161" cy="111" r="17" fill="#241013" stroke="#e0b767" stroke-width="4"/><path d="M153 111h16M161 103v16" stroke="#dfb464" stroke-width="2"/>
+            <path d="M85 127 Q111 112 134 127M187 127 Q212 112 238 127" fill="none" stroke="#c39150" stroke-width="4"/>
+          </svg>
+          <strong>鎏金夜莺音乐盒</strong><span class="price">¥ 6,800</span><span class="range">市场估值 ¥4,000–9,000 · 可信度 62%</span><span class="clock"><span></span></span>
+        </div>
+        <div class="actions"><span class="action">沉默观察</span><span class="action main">加价 ¥400</span><span class="action">跳价 ¥1,500</span></div>
+      </div>
+      <div class="rail">
+        <div class="panel"><h4>已知事实</h4><div class="fact">底板螺丝曾被更换<em>来自预展检查 · 可信</em></div><div class="fact">1926 年以前出处缺失<em>来自拍卖目录 · 未核实</em></div><div class="fact">陈默持有配套钥匙<em>来自白夫人 · 可能带有动机</em></div></div>
+        <div class="panel"><h4>委托进度</h4><div class="fact">寻找真正的“夜莺音乐盒”<em>候选目标 1 / 3</em></div><div class="fact">证明其属于失踪作曲家<em>证据链完成度 2 / 4</em></div></div>
+        <div class="panel"><h4>可用特殊行动</h4><div class="fact">公开质疑出处<em>风险 +8%，所有人重新估值</em></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="summary"><div class="note"><strong>布局</strong>中央拍品，左右常驻NPC与证据。</div><div class="note"><strong>色彩</strong>酒红、暗木、旧金与烛光肤色。</div><div class="note"><strong>素材</strong>人物半身油画，拍品静物油画。</div><div class="note"><strong>动效</strong>微弱呼吸、眼神、举牌与落槌震动。</div></div>
+  <div class="confirm-row">
+    <div class="confirm" data-choice="visual-confirmed" onclick="toggleSelect(this)"><h3>确认这个方向</h3><p>以这套视觉规范进入MVP范围设计。</p></div>
+    <div class="confirm" data-choice="visual-needs-adjustment" onclick="toggleSelect(this)"><h3>还需要调整</h3><p>保留选择，但继续修改信息、色彩或素材表现。</p></div>
+  </div>
+</div>

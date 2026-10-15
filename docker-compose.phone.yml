@@ -1,0 +1,73 @@
+# 碗里手机（rubens / Redmi K50 chroot dockerd）部署覆写
+#
+# 手机 dockerd 限制（见 /data/local/tmp/rubens-docker/validation-daemon.json）：
+#   storage=vfs, bridge=none, iptables=false → 无网桥，只能用 host 网络，
+#   ports: 映射不生效，容器间用 127.0.0.1 通信。
+#
+# 用法（在 /opt/wanli 下，配合根 docker-compose.yml）：
+#   docker compose -f docker-compose.yml -f docker-compose.phone.yml up -d
+# 或（含 tunnel）：
+#   docker compose -f docker-compose.yml -f docker-compose.phone.yml --profile tunnel up -d
+#
+# 注意：Cloudflare Tunnel 的 Public Hostname 入口（Zero Trust 面板）必须指向
+#   http://127.0.0.1:8082 与 http://127.0.0.1:9000（原来是 backend:8080 / minio:9000，
+#   且手机 8080 被 qqbot 占用，后端实际监听 8082）。
+
+services:
+  postgres:
+    # 新版 postgres:15-alpine 拆包了 pg_isready → 用 busybox nc 做 TCP 健康探测
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 5432"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    network_mode: host
+    ports: !reset []
+
+  redis:
+    # 同理：redis-cli 不在 PATH，用 nc 探测
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "6379"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    network_mode: host
+    ports: !reset []
+
+  minio:
+    # Docker Hub 的 minio/minio 已下架（2025 起）；arm64 二进制取自 bitnamilegacy/minio，
+    # 本地 Dockerfile（minio/Dockerfile）构建后打同一 tag 满足 compose 依赖
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    healthcheck:
+      test: ["CMD-SHELL", "printf 'GET /minio/health/live HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n' | nc -w 3 127.0.0.1 9000 | grep -q '200 OK' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    network_mode: host
+    ports: !reset []
+
+  backend:
+    # dockerd bridge=none + ip-forward=false → 构建期 RUN(go mod download)必须走 host 网络
+    build:
+      network: host
+    # 手机 8080 被 qqbot(/data/local/ubuntu/root/qqbot) 占用，后端改用 8082
+    environment:
+      PORT: "8082"
+      DB_HOST: 127.0.0.1
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: "6379"
+      S3_ENDPOINT: 127.0.0.1:9000
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-127.0.0.1:9000}
+    network_mode: host
+    ports: !reset []
+
+  cloudflared:
+    # Android eBPF 对非特权 UID 的 socket() 直接 EPERM → 必须以 root 运行
+    user: "0:0"
+    # gnirehtet 链路上 fake-ip 域名拨号不通 + 节点 UDP(QUIC) 受限 →
+    # hosts 固定 Cloudflare edge 真实 IP（198.41.x.x 属 Cloudflare AS），并走 http2 over TCP 7844
+    command: tunnel --no-autoupdate --protocol http2 run
+    extra_hosts:
+      - "region1.v2.argotunnel.com:198.41.192.167"
+      - "region2.v2.argotunnel.com:198.41.200.193"
+    network_mode: host

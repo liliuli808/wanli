@@ -1,0 +1,26 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.ap_
+*.aab
+output.json
+
+# Android Studio navigation editor
+.navigation/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Version control
+vcs.xml
+
+# OS
+Thumbs.db

@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS correction_proposals;
+DROP TABLE IF EXISTS cooking_records;
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS dietary_restrictions;
+DROP TABLE IF EXISTS kitchen_profiles;
+DROP TABLE IF EXISTS recipe_steps;
+DROP TABLE IF EXISTS recipe_ingredients;
+DROP TABLE IF EXISTS recipe_versions;
+DROP TABLE IF EXISTS recipes;
+DROP TABLE IF EXISTS video_sources;
+DROP TABLE IF EXISTS users;

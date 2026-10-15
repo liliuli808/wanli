@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.WanLi" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- 启动窗口背景对齐品牌米白，避免白屏闪烁 -->
+        <item name="android:windowBackground">@color/cream_background</item>
+        <item name="android:statusBarColor">@color/cream_background</item>
+    </style>
+</resources>
