@@ -1,0 +1,80 @@
+name: Android CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-android
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 有签名 secrets 时打正式签名包；没有时退回 debug 签名（仍可安装）
+      - name: Configure signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.WANLI_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.WANLI_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.WANLI_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.WANLI_KEY_PASSWORD }}
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > ../wanli-release.keystore
+            {
+              echo "WANLI_STORE_FILE=$(pwd)/../wanli-release.keystore"
+              echo "WANLI_STORE_PASSWORD=$STORE_PASSWORD"
+              echo "WANLI_KEY_ALIAS=$KEY_ALIAS"
+              echo "WANLI_KEY_PASSWORD=$KEY_PASSWORD"
+            } >> local.properties
+            echo "::notice::使用正式 keystore 签名"
+          else
+            echo "::warning::未配置签名 secrets，release 包将使用 debug 签名"
+          fi
+
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Build release APK
+        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk \
+            "out/wanli-${GITHUB_REF_NAME//\//-}-${GITHUB_SHA::7}.apk"
+          ls -lh out
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wanli-apk
+          path: frontend-android/out/*.apk
+          if-no-files-found: error
+          retention-days: 30
