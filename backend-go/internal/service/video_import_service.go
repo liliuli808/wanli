@@ -109,19 +109,32 @@ func (s *VideoImportService) Submit(ctx context.Context, userID uuid.UUID, rawUR
 		return nil, ErrInvalidVideoURL
 	}
 
-	// AC1：重复 BVID 直接跳转已有菜谱
+	// 去重：同一 BVID 解析成功后即写入 video_sources，草稿也占位（is_public=false）。
+	// 自己导入的草稿再次导入时不算重复，直接把带 version_id 的重复错误交给上层，
+	// 由客户端跳去校对页继续处理，避免「解析过就再也导不进来」。
 	existing, err := s.recipes.FindVideoSourceByBVID(ctx, bvid)
 	if err != nil {
 		return nil, err
 	}
+	creatorID := (*uuid.UUID)(nil)
 	if existing != nil {
 		recipeID, err := s.recipes.FindRecipeIDByVideoSourceID(ctx, existing.ID)
 		if err != nil {
 			return nil, err
 		}
 		if recipeID != nil {
+			recipe, err := s.recipes.FindRecipeByID(ctx, *recipeID)
+			if err != nil {
+				return nil, err
+			}
+			if recipe == nil {
+				return nil, fmt.Errorf("load recipe %s: not found", recipeID)
+			}
+			if recipe.CreatorID != nil {
+				creatorID = recipe.CreatorID
+			}
 			dup := &DuplicateVideoError{RecipeID: *recipeID}
-			// 附带已公开的 SOURCE 版本 ID，客户端可直接跳转菜谱详情页
+			// 优先附带已公开的 SOURCE 版本，客户端可直接跳转菜谱详情页
 			if nodes, err := s.recipes.ListPublicVersionsByRecipe(ctx, *recipeID); err == nil {
 				for _, node := range nodes {
 					if node.VersionType == model.VersionTypeSource {
@@ -130,6 +143,10 @@ func (s *VideoImportService) Submit(ctx context.Context, userID uuid.UUID, rawUR
 						break
 					}
 				}
+			}
+			// 尚未发布、且是当前用户自己导入的草稿：带上草稿版本，客户端跳去继续校对
+			if dup.VersionID == nil && creatorID != nil && *creatorID == userID {
+				dup.VersionID = s.findUserSourceDraft(ctx, userID, *recipeID)
 			}
 			return nil, dup
 		}
@@ -150,6 +167,24 @@ func (s *VideoImportService) Submit(ctx context.Context, userID uuid.UUID, rawUR
 		slog.String("bvid", bvid),
 		slog.String("user_id", userID.String()))
 	return task, nil
+}
+
+// findUserSourceDraft 在用户的 SOURCE 草稿里找该菜谱下的版本，找不到返回 nil。
+// 列表查询失败时不影响去重语义，降级为不带 version_id。
+func (s *VideoImportService) findUserSourceDraft(ctx context.Context, userID, recipeID uuid.UUID) *uuid.UUID {
+	drafts, err := s.recipes.ListUserSourceDrafts(ctx, userID)
+	if err != nil {
+		s.logger.Warn("查询用户草稿失败，重复导入不附带草稿版本",
+			slog.String("recipe_id", recipeID.String()), slog.String("error", err.Error()))
+		return nil
+	}
+	for _, d := range drafts {
+		if d.RecipeID == recipeID {
+			versionID := d.VersionID
+			return &versionID
+		}
+	}
+	return nil
 }
 
 // Get 查询任务状态。

@@ -13,6 +13,7 @@ import com.wanli.android.data.remote.CreateCookingRecordRequest
 import com.wanli.android.data.remote.ForkVersionRequest
 import com.wanli.android.data.remote.PendingCorrectionsData
 import com.wanli.android.data.remote.MyAdaptationsData
+import com.wanli.android.data.remote.MyRecipeDraftsData
 import com.wanli.android.data.remote.RecipeListData
 import com.wanli.android.data.remote.RecipeVersionData
 import com.wanli.android.data.remote.ReviewCorrectionData
@@ -78,6 +79,13 @@ class RecipeRepository @Inject constructor(
         fallbackMessage = "加载个人适配版失败"
     ) {
         val response = apiService.getMyAdaptations()
+        response.data?.takeIf { response.success }
+    }
+
+    suspend fun getMyRecipeDrafts(): ApiResult<MyRecipeDraftsData> = wrap(
+        fallbackMessage = "加载待校对菜谱失败"
+    ) {
+        val response = apiService.getMyRecipeDrafts()
         response.data?.takeIf { response.success }
     }
 

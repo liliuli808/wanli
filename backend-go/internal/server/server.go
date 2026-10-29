@@ -316,6 +316,7 @@ func registerRoutes(
 			}
 
 			if recipeHandler != nil {
+				authorized.GET("/me/recipe-drafts", recipeHandler.ListMyDrafts)
 				authorized.POST("/recipe-versions/:id/publish", recipeHandler.PublishVersion)
 				authorized.PUT("/recipe-versions/:id/draft", recipeHandler.UpdateDraft)
 				authorized.POST("/recipe-versions/:id/forks", recipeHandler.ForkVersion)

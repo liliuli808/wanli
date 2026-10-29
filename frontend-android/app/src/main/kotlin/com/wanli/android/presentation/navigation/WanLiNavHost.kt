@@ -17,6 +17,7 @@ import com.wanli.android.presentation.recipe.EDIT_MODE_FORK
 import com.wanli.android.presentation.recipe.PendingCorrectionsScreen
 import com.wanli.android.presentation.recipe.AdaptRecipeScreen
 import com.wanli.android.presentation.recipe.MyAdaptationsScreen
+import com.wanli.android.presentation.recipe.MyDraftsScreen
 import com.wanli.android.presentation.recipe.RecipeEditScreen
 import com.wanli.android.presentation.recipe.RecipeDetailScreen
 import com.wanli.android.presentation.recipe.VersionTreeScreen
@@ -31,6 +32,7 @@ object Routes {
     const val PENDING_CORRECTIONS = "correction-proposals/pending"
     const val ADAPT_RECIPE = "recipe-version/{versionId}/adapt"
     const val MY_ADAPTATIONS = "me/adaptations"
+    const val MY_DRAFTS = "me/recipe-drafts"
     const val DIETARY = "me/dietary-restrictions"
     const val BILIBILI_AUTH = "me/bilibili-credential"
 
@@ -59,6 +61,7 @@ fun WanLiNavHost(
                 onProofread = { versionId -> navController.navigate(Routes.proofread(versionId)) },
                 onOpenPendingCorrections = { navController.navigate(Routes.PENDING_CORRECTIONS) },
                 onOpenMyAdaptations = { navController.navigate(Routes.MY_ADAPTATIONS) },
+                onOpenMyDrafts = { navController.navigate(Routes.MY_DRAFTS) },
                 onOpenDietary = { navController.navigate(Routes.DIETARY) },
                 onOpenBilibiliAuth = { navController.navigate(Routes.BILIBILI_AUTH) },
                 onCheckForUpdate = onCheckForUpdate,
@@ -139,6 +142,18 @@ fun WanLiNavHost(
                 onBack = { navController.popBackStack() },
                 onOpenVersion = { versionId ->
                     navController.navigate(Routes.recipeDetail(versionId))
+                }
+            )
+        }
+        composable(Routes.MY_DRAFTS) {
+            MyDraftsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenProofread = { versionId -> navController.navigate(Routes.proofread(versionId)) },
+                onPublished = { versionId ->
+                    // 发布成功：详情页替换草稿列表，返回键回到「我的」
+                    navController.navigate(Routes.recipeDetail(versionId)) {
+                        popUpTo(Routes.MAIN)
+                    }
                 }
             )
         }

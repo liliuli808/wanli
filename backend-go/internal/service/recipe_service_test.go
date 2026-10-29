@@ -247,6 +247,39 @@ func (r *memoryRecipeRepo) FindRecipeIDByVideoSourceID(context.Context, uuid.UUI
 	return nil, nil
 }
 
+func (r *memoryRecipeRepo) ListUserSourceDrafts(_ context.Context, authorID uuid.UUID) ([]repository.UserSourceDraft, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var drafts []repository.UserSourceDraft
+	for _, v := range r.versions {
+		if v.AuthorID == nil || *v.AuthorID != authorID || v.IsPublic || v.VersionType != model.VersionTypeSource {
+			continue
+		}
+		recipe := r.recipes[v.RecipeID]
+		if recipe == nil || recipe.Status != model.ContentStatusActive {
+			continue
+		}
+		d := repository.UserSourceDraft{
+			VersionID:   v.ID,
+			Title:       v.Title,
+			RecipeID:    v.RecipeID,
+			CreatedAt:   v.CreatedAt,
+			VideoStatus: model.VideoStatusExpired,
+		}
+		if recipe.VideoSourceID != nil {
+			if src := r.sources[*recipe.VideoSourceID]; src != nil {
+				d.BVID = src.BVID
+				d.CoverURL = src.CoverURL
+				d.VideoStatus = src.Status
+			}
+		}
+		drafts = append(drafts, d)
+	}
+	sort.Slice(drafts, func(i, j int) bool { return drafts[i].CreatedAt.After(drafts[j].CreatedAt) })
+	return drafts, nil
+}
+
 func (r *memoryRecipeRepo) SaveSourceDraft(context.Context, repository.SourceDraftParams) (*model.RecipeVersion, error) {
 	return nil, nil
 }
@@ -289,6 +322,21 @@ func (r *memoryRecipeRepo) CreateDerivedVersion(_ context.Context, params reposi
 	}
 	r.versions[version.ID] = version
 	return version, nil
+}
+
+func TestListMySourceDrafts(t *testing.T) {
+	repo := newMemoryRecipeRepo()
+	authorID := uuid.New()
+	repo.seed(authorID, model.VersionTypeSource, false) // 未发布的 SOURCE 草稿
+	repo.seed(authorID, model.VersionTypeSource, true)  // 已发布，不应出现
+	repo.seed(uuid.New(), model.VersionTypeSource, false)
+
+	svc := NewRecipeService(repo)
+	drafts, err := svc.ListMySourceDrafts(context.Background(), authorID)
+	require.NoError(t, err)
+	require.Len(t, drafts, 1, "只返回自己的未发布草稿")
+	assert.Equal(t, "家常红烧肉", drafts[0].Title)
+	assert.Equal(t, "BV1xx411c7xx", drafts[0].BVID, "带上 BVID 便于客户端展示来源")
 }
 
 func TestGetVersionDetail_PublicVersionAllowsGuest(t *testing.T) {

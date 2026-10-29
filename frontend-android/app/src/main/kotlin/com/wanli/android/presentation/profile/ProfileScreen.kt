@@ -73,6 +73,7 @@ fun ProfileScreen(
     onLogin: () -> Unit,
     onOpenPendingCorrections: () -> Unit = {},
     onOpenMyAdaptations: () -> Unit = {},
+    onOpenMyDrafts: () -> Unit = {},
     onOpenDietary: () -> Unit = {},
     onOpenKitchen: () -> Unit = {},
     onOpenBilibiliAuth: () -> Unit = {},
@@ -97,6 +98,7 @@ fun ProfileScreen(
             onLogout = onLogout,
             onOpenPendingCorrections = onOpenPendingCorrections,
             onOpenMyAdaptations = onOpenMyAdaptations,
+            onOpenMyDrafts = onOpenMyDrafts,
             onOpenDietary = onOpenDietary,
             onOpenKitchen = onOpenKitchen,
             onOpenBilibiliAuth = onOpenBilibiliAuth,
@@ -111,6 +113,7 @@ private fun LoggedInProfile(
     onLogout: () -> Unit,
     onOpenPendingCorrections: () -> Unit,
     onOpenMyAdaptations: () -> Unit,
+    onOpenMyDrafts: () -> Unit,
     onOpenDietary: () -> Unit,
     onOpenKitchen: () -> Unit,
     onOpenBilibiliAuth: () -> Unit,
@@ -148,6 +151,7 @@ private fun LoggedInProfile(
                 onLogout = onLogout,
                 onOpenPendingCorrections = onOpenPendingCorrections,
                 onOpenMyAdaptations = onOpenMyAdaptations,
+                onOpenMyDrafts = onOpenMyDrafts,
                 onOpenDietary = onOpenDietary,
                 onOpenKitchen = onOpenKitchen,
                 onOpenBilibiliAuth = onOpenBilibiliAuth,
@@ -164,6 +168,7 @@ private fun ProfileContent(
     onLogout: () -> Unit,
     onOpenPendingCorrections: () -> Unit,
     onOpenMyAdaptations: () -> Unit,
+    onOpenMyDrafts: () -> Unit,
     onOpenDietary: () -> Unit,
     onOpenKitchen: () -> Unit,
     onOpenBilibiliAuth: () -> Unit,
@@ -234,7 +239,9 @@ private fun ProfileContent(
             WanLiCard(modifier = Modifier.padding(horizontal = 20.dp)) {
                 MenuRow(icon = Icons.Outlined.Restaurant, title = "我的适配版", onClick = onOpenMyAdaptations)
                 MenuDivider()
-                MenuRow(icon = Icons.Outlined.RateReview, title = "待审核纠错", onClick = onOpenPendingCorrections)
+                MenuRow(icon = Icons.Outlined.RateReview, title = "待校对菜谱", onClick = onOpenMyDrafts)
+                MenuDivider()
+                MenuRow(icon = Icons.Outlined.Edit, title = "待审核纠错", onClick = onOpenPendingCorrections)
                 MenuDivider()
                 MenuRow(icon = Icons.Outlined.Kitchen, title = "厨房设置", onClick = onOpenKitchen)
                 MenuDivider()

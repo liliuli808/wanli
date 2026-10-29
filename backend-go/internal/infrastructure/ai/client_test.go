@@ -77,8 +77,7 @@ func sampleInput() ParseInput {
 func TestExtractRecipe_Success(t *testing.T) {
 	server := newFakeAIServer(t, validRecipeJSON(), func(t *testing.T, req chatCompletionRequest) {
 		// 必须请求结构化 JSON 输出
-		require.NotNil(t, req.ResponseFormat)
-		assert.Equal(t, "json_object", req.ResponseFormat.Type)
+		// 不再强制 response_format=json_object：推理类模型不兼容，靠 Prompt 约束即可
 		assert.Equal(t, "deepseek-chat", req.Model)
 		require.Len(t, req.Messages, 2)
 		assert.Equal(t, "system", req.Messages[0].Role)
@@ -154,11 +153,76 @@ func TestParseInput_HasContent(t *testing.T) {
 	assert.True(t, ParseInput{Subtitles: []SubtitleInput{{Text: "字幕"}}}.HasContent())
 }
 
-func TestStripCodeFence(t *testing.T) {
-	assert.Equal(t, `{"a":1}`, stripCodeFence("```json\n{\"a\":1}\n```"))
-	assert.Equal(t, `{"a":1}`, stripCodeFence("```\n{\"a\":1}\n```"))
-	assert.Equal(t, `{"a":1}`, stripCodeFence(`{"a":1}`))
-	assert.Equal(t, `{"a":1}`, stripCodeFence("  {\"a\":1}  "))
+func TestExtractJSON(t *testing.T) {
+	want := hasKeys("ingredients", "steps")
+	fenced := "```json\n" + validRecipeJSON() + "\n```"
+	assert.JSONEq(t, validRecipeJSON(), extractJSON(fenced, want))
+	assert.JSONEq(t, validRecipeJSON(), extractJSON(validRecipeJSON(), want))
+	assert.Equal(t, `{"a":1}`, extractJSON("```\n{\"a\":1}\n```", nil))
+	assert.Equal(t, `{"a":1}`, extractJSON(`{"a":1}`, nil))
+
+	// 推理模型：content 里先复述 Prompt 里的 schema 示例，再给真正结果
+	reasoned := "先分析一下。Schema 示例：{\"title\":\"菜名\",\"ingredients\":[]} 最终答案：\n" + validRecipeJSON()
+	assert.JSONEq(t, validRecipeJSON(), extractJSON(reasoned, want))
+
+	// 完全没有 JSON
+	assert.Equal(t, "", extractJSON("只有文字，没有结果", want))
+	// 没有任何对象满足 want 时退而返回第一个可解析对象，交给 schema 校验报错
+	assert.Equal(t, `{"a":1}`, extractJSON(`{"a":1}`, want))
+}
+
+func TestExtractRecipe_EmptyContent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"choices": [{"message": {"content": ""}, "finish_reason": "length"}]}`)
+	}))
+	defer server.Close()
+
+	client := New("test-key", server.URL, "deepseek-chat")
+	_, err := client.ExtractRecipe(context.Background(), sampleInput())
+	assert.ErrorContains(t, err, "模型返回空内容")
+	assert.ErrorContains(t, err, "finish_reason=length")
+}
+
+func TestExtractRecipe_NormalizesNumericTypes(t *testing.T) {
+	// 推理模型实测输出：时间戳带小数、时长写成数字字符串
+	content := `{
+		"title": "番茄炒蛋",
+		"servings": null,
+		"estimated_minutes": "10",
+		"ingredients": [
+			{"name": "鸡蛋", "amount": "2个", "category": "MAIN", "is_explicit": true},
+			{"name": "盐", "amount": null, "category": "SEASONING", "is_explicit": true}
+		],
+		"steps": [
+			{"step_order": 1, "description": "鸡蛋打散", "video_timestamp": 23.93, "duration_seconds": null, "heat": null},
+			{"step_order": 2, "description": "热锅倒油", "video_timestamp": "45", "duration_seconds": 30.6, "heat": "中火"}
+		],
+		"instructions": null
+	}`
+	server := newFakeAIServer(t, content, nil)
+
+	client := New("test-key", server.URL, "deepseek-chat")
+	recipe, err := client.ExtractRecipe(context.Background(), sampleInput())
+	require.NoError(t, err)
+
+	assert.Equal(t, 10, *recipe.EstimatedMinutes)
+	require.Len(t, recipe.Steps, 2)
+	assert.Equal(t, 24, *recipe.Steps[0].VideoTimestamp)
+	assert.Nil(t, recipe.Steps[0].DurationSeconds)
+	assert.Nil(t, recipe.Steps[0].Heat)
+	assert.Equal(t, 45, *recipe.Steps[1].VideoTimestamp)
+	assert.Equal(t, 31, *recipe.Steps[1].DurationSeconds)
+	assert.Nil(t, recipe.Ingredients[1].Amount, "null 必须保留")
+}
+
+func TestNormalizeModelJSON(t *testing.T) {
+	assert.Equal(t,
+		`{"estimated_minutes":10,"steps":[{"duration_seconds":31,"video_timestamp":24}]}`,
+		normalizeModelJSON(`{"estimated_minutes":"10","steps":[{"duration_seconds":30.6,"video_timestamp":23.93}]}`))
+	assert.Equal(t, `{"steps":[{"video_timestamp":"不是数字"}]}`,
+		normalizeModelJSON(`{"steps":[{"video_timestamp":"不是数字"}]}`), "无法解析的字符串原样保留，交给后续报错")
+	assert.Equal(t, `[1,2]`, normalizeModelJSON(`[1,2]`), "非对象原样返回")
+	assert.Equal(t, `不是 JSON`, normalizeModelJSON(`不是 JSON`))
 }
 
 func TestAdaptRecipe_Success(t *testing.T) {
@@ -183,8 +247,6 @@ func TestAdaptRecipe_Success(t *testing.T) {
 		}
 	}`
 	server := newFakeAIServer(t, content, func(t *testing.T, req chatCompletionRequest) {
-		require.NotNil(t, req.ResponseFormat)
-		assert.Equal(t, "json_object", req.ResponseFormat.Type)
 		assert.Contains(t, req.Messages[0].Content, "过敏")
 		assert.Contains(t, req.Messages[1].Content, `"ingredient_name":"花生"`)
 	})
