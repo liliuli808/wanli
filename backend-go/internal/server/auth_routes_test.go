@@ -17,7 +17,7 @@ import (
 )
 
 // newAuthTestServer 构建无 DB / Redis / 存储的测试服务器。
-// TURNSTILE_SECRET_KEY 为空 → 使用闭锁 Stub，人机验证恒失败（fail-closed）。
+// 显式开启 Turnstile 且 secret 为空 → 使用闭锁 Stub，人机验证恒失败（fail-closed）。
 func newAuthTestServer(t *testing.T, siteKey string) *Server {
 	t.Helper()
 
@@ -30,6 +30,7 @@ func newAuthTestServer(t *testing.T, siteKey string) *Server {
 			ExpiryHours: 24,
 		},
 		Turnstile: config.TurnstileConfig{
+			Enabled:   true,
 			SiteKey:   siteKey,
 			SecretKey: "", // 空 secret key → turnstile.Stub，恒返回未通过
 		},
@@ -92,13 +93,24 @@ func TestAuthRoutes_Login_CaptchaFailed(t *testing.T) {
 
 func TestAuthRoutes_Register_ValidationError(t *testing.T) {
 	srv := newAuthTestServer(t, "1x00000000000000000000AA")
-	// 缺少必填的 turnstile_token
-	body := `{"email":"cook@example.com","password":"password123"}`
+	// 缺少必填的 password
+	body := `{"email":"cook@example.com"}`
 
 	w := performJSONRequest(srv, http.MethodPost, "/api/v1/auth/register", body)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assertErrorCode(t, w, "VALIDATION_ERROR")
+}
+
+func TestAuthRoutes_Register_MissingTokenStillChecksCaptcha(t *testing.T) {
+	srv := newAuthTestServer(t, "1x00000000000000000000AA")
+	// turnstile_token 已改为可选字段；开启校验时缺失 token 仍应被拒
+	body := `{"email":"cook@example.com","password":"password123"}`
+
+	w := performJSONRequest(srv, http.MethodPost, "/api/v1/auth/register", body)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assertErrorCode(t, w, "CAPTCHA_FAILED")
 }
 
 func TestAuthRoutes_CaptchaWidget_ContainsSiteKey(t *testing.T) {

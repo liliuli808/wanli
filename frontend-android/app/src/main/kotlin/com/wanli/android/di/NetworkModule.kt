@@ -19,7 +19,6 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.io.IOException
 import java.util.Properties
-import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -38,13 +37,6 @@ object NetworkModule {
         } catch (e: IOException) {
             "http://10.0.2.2:8080/api/v1/"
         }
-    }
-
-    @Provides
-    @Singleton
-    @Named("serverRootUrl")
-    fun provideServerRootUrl(baseUrl: String): String {
-        return baseUrl.trimEnd('/').removeSuffix("/api/v1")
     }
 
     @Provides

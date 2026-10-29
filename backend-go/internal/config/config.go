@@ -165,6 +165,8 @@ type BilibiliConfig struct {
 }
 
 type TurnstileConfig struct {
+	// Enabled 为 false 时跳过人机验证（国内网络下 Turnstile 挑战域名可用性差）。
+	Enabled   bool
 	SiteKey   string
 	SecretKey string
 }
@@ -172,6 +174,8 @@ type TurnstileConfig struct {
 type AuthConfig struct {
 	MaxFailures    int
 	LockoutMinutes int
+	// RegisterMaxPerHour 是同一 IP 每小时允许的注册次数，0 表示不限制。
+	RegisterMaxPerHour int
 }
 
 // Load 加载配置：默认值 < .env 文件（存在时） < 操作系统环境变量。
@@ -206,6 +210,8 @@ func Load() (*Config, error) {
 	v.SetDefault("JWT_EXPIRY_HOURS", 168)
 	v.SetDefault("AUTH_MAX_FAILURES", 5)
 	v.SetDefault("AUTH_LOCKOUT_MINUTES", 15)
+	v.SetDefault("AUTH_REGISTER_MAX_PER_HOUR", 10)
+	v.SetDefault("TURNSTILE_ENABLED", false)
 	v.SetDefault("AI_BASE_URL", "https://api.deepseek.com/v1")
 	v.SetDefault("AI_MODEL", "deepseek-chat")
 	v.SetDefault("AI_POOL_COOLDOWN_SECONDS", 60)
@@ -258,12 +264,14 @@ func Load() (*Config, error) {
 			Cookie: v.GetString("BILIBILI_COOKIE"),
 		},
 		Turnstile: TurnstileConfig{
+			Enabled:   v.GetBool("TURNSTILE_ENABLED"),
 			SiteKey:   v.GetString("TURNSTILE_SITE_KEY"),
 			SecretKey: v.GetString("TURNSTILE_SECRET_KEY"),
 		},
 		Auth: AuthConfig{
-			MaxFailures:    v.GetInt("AUTH_MAX_FAILURES"),
-			LockoutMinutes: v.GetInt("AUTH_LOCKOUT_MINUTES"),
+			MaxFailures:        v.GetInt("AUTH_MAX_FAILURES"),
+			LockoutMinutes:     v.GetInt("AUTH_LOCKOUT_MINUTES"),
+			RegisterMaxPerHour: v.GetInt("AUTH_REGISTER_MAX_PER_HOUR"),
 		},
 	}, nil
 }

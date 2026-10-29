@@ -80,3 +80,11 @@ type Stub struct{}
 func (Stub) Verify(context.Context, string, string) (bool, error) {
 	return false, nil
 }
+
+// Noop 是显式关闭人机验证（TURNSTILE_ENABLED=false）时的放行实现。
+type Noop struct{}
+
+// Verify 恒返回 true。
+func (Noop) Verify(context.Context, string, string) (bool, error) {
+	return true, nil
+}

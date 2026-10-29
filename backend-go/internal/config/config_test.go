@@ -33,10 +33,12 @@ func TestLoad_Defaults(t *testing.T) {
 	assert.Equal(t, "deepseek-chat", cfg.AI.Model)
 	assert.Equal(t, "https://api.deepseek.com/v1", cfg.AI.BaseURL)
 	assert.Empty(t, cfg.Bilibili.Cookie)
+	assert.False(t, cfg.Turnstile.Enabled)
 	assert.Empty(t, cfg.Turnstile.SiteKey)
 	assert.Empty(t, cfg.Turnstile.SecretKey)
 	assert.Equal(t, 5, cfg.Auth.MaxFailures)
 	assert.Equal(t, 15, cfg.Auth.LockoutMinutes)
+	assert.Equal(t, 10, cfg.Auth.RegisterMaxPerHour)
 	assert.Equal(t, 168, cfg.JWT.ExpiryHours)
 }
 
@@ -72,12 +74,14 @@ func TestLoad_OSEnvOverridesEnvFile(t *testing.T) {
 func TestLoad_OSEnv(t *testing.T) {
 	chdir(t, t.TempDir())
 	t.Setenv("DB_HOST", "db.internal")
+	t.Setenv("TURNSTILE_ENABLED", "true")
 	t.Setenv("TURNSTILE_SECRET_KEY", "test-secret")
 	t.Setenv("BILIBILI_COOKIE", "SESSDATA=os-session")
 
 	cfg, err := Load()
 	require.NoError(t, err)
 	assert.Equal(t, "db.internal", cfg.Database.Host)
+	assert.True(t, cfg.Turnstile.Enabled)
 	assert.Equal(t, "test-secret", cfg.Turnstile.SecretKey)
 	assert.Equal(t, "SESSDATA=os-session", cfg.Bilibili.Cookie)
 }

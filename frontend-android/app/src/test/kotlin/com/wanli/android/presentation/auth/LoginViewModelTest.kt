@@ -35,7 +35,7 @@ class LoginViewModelTest {
         tokenDataStore = mockk(relaxed = true)
     }
 
-    private fun viewModel() = LoginViewModel(authRepository, tokenDataStore, "http://10.0.2.2:8081")
+    private fun viewModel() = LoginViewModel(authRepository, tokenDataStore)
 
     @After
     fun tearDown() {
@@ -44,22 +44,22 @@ class LoginViewModelTest {
 
     @Test
     fun `login success moves to LoggedIn state`() = runTest {
-        coEvery { authRepository.login("a@b.c", "password123", "cf-token") } returns
+        coEvery { authRepository.login("a@b.c", "password123") } returns
             ApiResult.Success(UserDto(id = "u1", email = "a@b.c"))
 
         val viewModel = viewModel()
-        viewModel.login("a@b.c", "password123", "cf-token", remember = true)
+        viewModel.login("a@b.c", "password123", remember = true)
 
         assertTrue(viewModel.uiState.value is LoginUiState.LoggedIn)
     }
 
     @Test
     fun `login network error surfaces error state with message`() = runTest {
-        coEvery { authRepository.login("a@b.c", "password123", "cf-token") } returns
+        coEvery { authRepository.login("a@b.c", "password123") } returns
             ApiResult.Error("NETWORK_ERROR", "网络错误，请稍后重试")
 
         val viewModel = viewModel()
-        viewModel.login("a@b.c", "password123", "cf-token", remember = true)
+        viewModel.login("a@b.c", "password123", remember = true)
 
         val state = viewModel.uiState.value
         assertTrue(state is LoginUiState.Error)
@@ -68,63 +68,57 @@ class LoginViewModelTest {
 
     @Test
     fun `register success moves to LoggedIn state`() = runTest {
-        coEvery { authRepository.register("a@b.c", "password123", "cf-token") } returns
+        coEvery { authRepository.register("a@b.c", "password123") } returns
             ApiResult.Success(UserDto(id = "u1", email = "a@b.c"))
 
         val viewModel = viewModel()
-        viewModel.register("a@b.c", "password123", "cf-token", remember = true)
+        viewModel.register("a@b.c", "password123", remember = true)
 
         assertTrue(viewModel.uiState.value is LoginUiState.LoggedIn)
-    }
-
-    @Test
-    fun `captcha url derives from server root`() {
-        val viewModel = viewModel()
-        assertEquals("http://10.0.2.2:8081/captcha", viewModel().captchaUrl)
     }
 
     @Test
     fun `email with control char is sanitized before login`() = runTest {
-        coEvery { authRepository.login("a@b.c", "password123", "cf-token") } returns
+        coEvery { authRepository.login("a@b.c", "password123") } returns
             ApiResult.Success(UserDto(id = "u1", email = "a@b.c"))
 
         val viewModel = viewModel()
-        viewModel.login("a@b.c\u0001", "password123", "cf-token", remember = true)
+        viewModel.login("a@b.c\u0001", "password123", remember = true)
 
         assertTrue(viewModel.uiState.value is LoginUiState.LoggedIn)
-        coVerify { authRepository.login("a@b.c", "password123", "cf-token") }
+        coVerify { authRepository.login("a@b.c", "password123") }
     }
 
     @Test
     fun `register trims email before calling repository`() = runTest {
-        coEvery { authRepository.register("a@b.c", "password123", "cf-token") } returns
+        coEvery { authRepository.register("a@b.c", "password123") } returns
             ApiResult.Success(UserDto(id = "u1", email = "a@b.c"))
 
         val viewModel = viewModel()
-        viewModel.register("  a@b.c  ", "password123", "cf-token", remember = true)
+        viewModel.register("  a@b.c  ", "password123", remember = true)
 
         assertTrue(viewModel.uiState.value is LoginUiState.LoggedIn)
-        coVerify { authRepository.register("a@b.c", "password123", "cf-token") }
+        coVerify { authRepository.register("a@b.c", "password123") }
     }
 
     @Test
     fun `login with remember persists sanitized credentials`() = runTest {
-        coEvery { authRepository.login("a@b.c", "password123", "cf-token") } returns
+        coEvery { authRepository.login("a@b.c", "password123") } returns
             ApiResult.Success(UserDto(id = "u1", email = "a@b.c"))
         coEvery { tokenDataStore.saveCredentials(any(), any()) } just Runs
 
-        viewModel().login(" a@b.c\u0001 ", "password123", "cf-token", remember = true)
+        viewModel().login(" a@b.c\u0001 ", "password123", remember = true)
 
         coVerify { tokenDataStore.saveCredentials("a@b.c", "password123") }
     }
 
     @Test
     fun `login without remember clears saved credentials`() = runTest {
-        coEvery { authRepository.login("a@b.c", "password123", "cf-token") } returns
+        coEvery { authRepository.login("a@b.c", "password123") } returns
             ApiResult.Success(UserDto(id = "u1", email = "a@b.c"))
         coEvery { tokenDataStore.clearCredentials() } just Runs
 
-        viewModel().login("a@b.c", "password123", "cf-token", remember = false)
+        viewModel().login("a@b.c", "password123", remember = false)
 
         coVerify { tokenDataStore.clearCredentials() }
         coVerify(exactly = 0) { tokenDataStore.saveCredentials(any(), any()) }
@@ -132,10 +126,10 @@ class LoginViewModelTest {
 
     @Test
     fun `failed login does not touch saved credentials`() = runTest {
-        coEvery { authRepository.login("a@b.c", "password123", "cf-token") } returns
+        coEvery { authRepository.login("a@b.c", "password123") } returns
             ApiResult.Error("INVALID_CREDENTIALS", "邮箱或密码错误")
 
-        viewModel().login("a@b.c", "password123", "cf-token", remember = true)
+        viewModel().login("a@b.c", "password123", remember = true)
 
         coVerify(exactly = 0) { tokenDataStore.saveCredentials(any(), any()) }
         coVerify(exactly = 0) { tokenDataStore.clearCredentials() }

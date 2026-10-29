@@ -66,10 +66,14 @@ func New(
 	}
 
 	var turnstileVerifier turnstile.Verifier
-	if cfg.Turnstile.SecretKey == "" {
+	switch {
+	case !cfg.Turnstile.Enabled:
+		logger.Info("Turnstile 已关闭（TURNSTILE_ENABLED=false），跳过人机验证")
+		turnstileVerifier = turnstile.Noop{}
+	case cfg.Turnstile.SecretKey == "":
 		logger.Warn("TURNSTILE_SECRET_KEY 未配置，人机验证将恒失败（闭锁）")
 		turnstileVerifier = turnstile.Stub{}
-	} else {
+	default:
 		turnstileVerifier = turnstile.New(cfg.Turnstile.SecretKey)
 	}
 
@@ -82,6 +86,16 @@ func New(
 		loginLimiter = service.NewMemoryLoginLimiter(cfg.Auth.MaxFailures, lockout)
 	}
 
+	var registerLimiter service.RegisterLimiter
+	if cfg.Auth.RegisterMaxPerHour > 0 {
+		if rdb != nil {
+			registerLimiter = service.NewRedisRegisterLimiter(rdb, cfg.Auth.RegisterMaxPerHour, time.Hour)
+		} else {
+			logger.Warn("redis not available, using in-memory register limiter")
+			registerLimiter = service.NewMemoryRegisterLimiter(cfg.Auth.RegisterMaxPerHour, time.Hour)
+		}
+	}
+
 	authService := service.NewAuthService(userRepo, jwtManager, turnstileVerifier, loginLimiter)
 	kitchenService := service.NewKitchenService(kitchenRepo)
 
@@ -89,7 +103,7 @@ func New(
 	// 让冷却状态全局生效（某端点挂了对两条链路同时跳过）。
 	aiPool := newAIPool(cfg.AI, logger)
 
-	authHandler := handler.NewAuthHandler(authService, cfg.Turnstile.SiteKey)
+	authHandler := handler.NewAuthHandler(authService, cfg.Turnstile.SiteKey, registerLimiter)
 	kitchenHandler := handler.NewKitchenHandler(kitchenService)
 	healthHandler := handler.NewHealthHandler()
 

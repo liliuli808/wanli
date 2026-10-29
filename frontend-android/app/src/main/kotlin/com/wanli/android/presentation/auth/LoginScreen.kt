@@ -31,7 +31,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,9 +60,7 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var turnstileToken by remember { mutableStateOf<String?>(null) }
     var mode by remember { mutableStateOf(LoginMode.Login) }
-    var widgetEpoch by remember { mutableStateOf(0) }
     var remember by remember { mutableStateOf(true) }
 
     // 上次记住的账号密码自动填一次；之后用户自己改过就不再覆盖
@@ -85,27 +82,15 @@ fun LoginScreen(
         }
     }
 
-    // 登录/注册失败后，强制刷新验证码（token 一次性）
-    LaunchedEffect(uiState) {
-        if (uiState is LoginUiState.Error) {
-            turnstileToken = null
-            widgetEpoch++
-        }
-    }
-
     fun switchMode() {
         mode = if (mode == LoginMode.Login) LoginMode.Register else LoginMode.Login
-        turnstileToken = null
-        widgetEpoch++
     }
 
     val submit: () -> Unit = {
-        turnstileToken?.let { token ->
-            if (mode == LoginMode.Login) {
-                viewModel.login(email, password, token, remember)
-            } else {
-                viewModel.register(email, password, token, remember)
-            }
+        if (mode == LoginMode.Login) {
+            viewModel.login(email, password, remember)
+        } else {
+            viewModel.register(email, password, remember)
         }
     }
 
@@ -198,18 +183,6 @@ fun LoginScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    key(widgetEpoch) {
-                        TurnstileWidget(
-                            widgetUrl = viewModel.captchaUrl,
-                            onTokenReceived = { turnstileToken = it },
-                            onError = { turnstileToken = null },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp)
-                        )
-                    }
                 }
             }
 
@@ -221,7 +194,6 @@ fun LoginScreen(
                 shape = MaterialTheme.shapes.large,
                 enabled = email.isNotBlank() &&
                     password.isNotBlank() &&
-                    turnstileToken != null &&
                     uiState !is LoginUiState.Loading
             ) {
                 Text(if (mode == LoginMode.Login) "登录" else "注册")

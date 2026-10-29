@@ -3,7 +3,9 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -25,29 +27,48 @@ func userResponse(u *model.User) gin.H {
 
 // AuthHandler 认证接口。
 type AuthHandler struct {
-	authService *service.AuthService
-	siteKey     string
+	authService     *service.AuthService
+	siteKey         string
+	registerLimiter service.RegisterLimiter
 }
 
-// NewAuthHandler 创建 AuthHandler。
-func NewAuthHandler(authService *service.AuthService, siteKey string) *AuthHandler {
-	return &AuthHandler{authService: authService, siteKey: siteKey}
+// NewAuthHandler 创建 AuthHandler。registerLimiter 为 nil 时不限制注册频率。
+func NewAuthHandler(authService *service.AuthService, siteKey string, registerLimiter service.RegisterLimiter) *AuthHandler {
+	return &AuthHandler{authService: authService, siteKey: siteKey, registerLimiter: registerLimiter}
 }
 
 type registerRequest struct {
-	Email          string `json:"email" binding:"required,email"`
-	Password       string `json:"password" binding:"required,min=8,max=72"`
-	TurnstileToken string `json:"turnstile_token" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8,max=72"`
+	// TurnstileToken 可选：仅在 TURNSTILE_ENABLED=true 时参与校验。
+	TurnstileToken string `json:"turnstile_token"`
 }
 
 type loginRequest struct {
-	Email          string `json:"email" binding:"required,email"`
-	Password       string `json:"password" binding:"required"`
-	TurnstileToken string `json:"turnstile_token" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+	// TurnstileToken 可选：仅在 TURNSTILE_ENABLED=true 时参与校验。
+	TurnstileToken string `json:"turnstile_token"`
 }
 
 // Register 邮箱+密码注册。
 func (h *AuthHandler) Register(c *gin.Context) {
+	if h.registerLimiter != nil {
+		// 经 Cloudflare Tunnel 访问时以 CF-Connecting-IP 为准，避免 X-Forwarded-For 被伪造绕过限流。
+		clientIP := strings.TrimSpace(c.GetHeader("CF-Connecting-IP"))
+		if clientIP == "" {
+			clientIP = c.ClientIP()
+		}
+		allowed, err := h.registerLimiter.Allow(c.Request.Context(), clientIP)
+		if err != nil {
+			// 限流器故障时放行，避免 Redis 抖动导致注册不可用。
+			slog.Default().Warn("register limiter unavailable, allowing request", "err", err)
+		} else if !allowed {
+			response.Fail(c, apperror.New("AUTH_TOO_MANY_ATTEMPTS", "注册过于频繁，请稍后再试", http.StatusTooManyRequests))
+			return
+		}
+	}
+
 	if err := prepareBodyWithCleanEmail(c); err != nil {
 		response.FailWithDetails(c, apperror.ErrValidation, err.Error())
 		return

@@ -169,15 +169,13 @@ data class ErrorBody(
 @Serializable
 data class LoginRequest(
     val email: String,
-    val password: String,
-    @SerialName("turnstile_token") val turnstileToken: String
+    val password: String
 )
 
 @Serializable
 data class RegisterRequest(
     val email: String,
-    val password: String,
-    @SerialName("turnstile_token") val turnstileToken: String
+    val password: String
 )
 
 @Serializable

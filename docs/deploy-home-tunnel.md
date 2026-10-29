@@ -64,4 +64,4 @@ Android App ──https──> Cloudflare 边缘 ──Tunnel(出站)──> clo
 
 - 电脑关机服务即离线；Cloudflare 边缘会返回 502/503，属正常
 - BILIBILI_COOKIE 含 `$` 时需在 .env 中写成 `$$`（docker compose 变量插值规则）
-- 注册/登录需配置 `TURNSTILE_SITE_KEY` 与 `TURNSTILE_SECRET_KEY`（Cloudflare 后台创建 widget）；开发期可用官方测试 key `1x00000000000000000000AA`（恒通过），上线前替换为真实 key 并在 widget 中添加生产域名
+- 注册/登录的人机验证默认关闭（`TURNSTILE_ENABLED=false`）：Turnstile 挑战域名在部分国内网络不可达，会硬阻断登录/注册。需要开启时设 `TURNSTILE_ENABLED=true` 并配置 `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY`，同时客户端要恢复 Turnstile widget（当前 App 已移除）

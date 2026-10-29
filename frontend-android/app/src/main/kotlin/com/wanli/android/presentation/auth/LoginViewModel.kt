@@ -12,13 +12,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import javax.inject.Named
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val tokenDataStore: TokenDataStore,
-    @Named("serverRootUrl") private val serverRootUrl: String
+    private val tokenDataStore: TokenDataStore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -27,18 +25,15 @@ class LoginViewModel @Inject constructor(
     /** 上次「记住密码」保存的账号密码，用于登录页自动填充。 */
     val savedCredentials: Flow<SavedCredentials?> = tokenDataStore.savedCredentials
 
-    val captchaUrl: String
-        get() = "$serverRootUrl/captcha"
-
-    fun register(email: String, password: String, turnstileToken: String, remember: Boolean) {
+    fun register(email: String, password: String, remember: Boolean) {
         submit(remember, email, password) {
-            authRepository.register(sanitizeEmail(email), password, turnstileToken)
+            authRepository.register(sanitizeEmail(email), password)
         }
     }
 
-    fun login(email: String, password: String, turnstileToken: String, remember: Boolean) {
+    fun login(email: String, password: String, remember: Boolean) {
         submit(remember, email, password) {
-            authRepository.login(sanitizeEmail(email), password, turnstileToken)
+            authRepository.login(sanitizeEmail(email), password)
         }
     }
 

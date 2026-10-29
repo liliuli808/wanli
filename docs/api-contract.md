@@ -92,7 +92,7 @@
 - **校验**：邮箱或密码错误统一返回 `401 AUTH_INVALID_CREDENTIALS`（不区分账号是否存在）；连续失败达 `AUTH_MAX_FAILURES`（默认 5）次锁定 `AUTH_LOCKOUT_MINUTES`（默认 15）分钟，返回 `429 AUTH_TOO_MANY_ATTEMPTS`。
 - **返回**：`200 OK`，结构同注册。
 
-> **人机验证页面**：Android 端在 `GET /captcha` 加载内嵌 Turnstile 组件的页面，成功后通过 WebView 的 `AndroidBridge` 拿到 token。token 为一次性，校验失败后需重新加载页面获取新 token。
+> **人机验证（默认关闭）**：`turnstile_token` 为可选字段。`TURNSTILE_ENABLED=false`（默认）时服务端跳过校验；设为 `true` 后，Android 端需在 `GET /captcha` 加载内嵌 Turnstile 组件的页面，通过 WebView 的 `AndroidBridge` 拿到 token 提交。token 为一次性，校验失败后需重新加载页面获取新 token。
 
 ---
 

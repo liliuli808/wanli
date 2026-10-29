@@ -40,7 +40,7 @@ class AuthRepositoryTest {
     fun `login returns network error instead of throwing when api call fails`() = runTest {
         coEvery { apiService.login(any()) } throws IOException("timeout")
 
-        val result = repository.login("a@b.c", "password123", "cf-token")
+        val result = repository.login("a@b.c", "password123")
 
         assertTrue(result is ApiResult.Error)
         result as ApiResult.Error
@@ -49,17 +49,17 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `register sends email password and turnstile token`() = runTest {
+    fun `register sends email and password`() = runTest {
         coEvery { apiService.register(any()) } returns mockLoginResponse()
 
-        val result = repository.register("a@b.c", "password123", "cf-token")
+        val result = repository.register("a@b.c", "password123")
 
         assertTrue(result is ApiResult.Success)
         result as ApiResult.Success
         assertEquals("u1", result.data.id)
         coVerify { tokenDataStore.saveToken("jwt-token", "u1", "a@b.c") }
         coVerify { apiService.register(match<RegisterRequest> {
-            it.email == "a@b.c" && it.password == "password123" && it.turnstileToken == "cf-token"
+            it.email == "a@b.c" && it.password == "password123"
         }) }
     }
 }

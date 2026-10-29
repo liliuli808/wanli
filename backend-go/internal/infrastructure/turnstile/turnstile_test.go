@@ -46,6 +46,12 @@ func TestVerify_EmptyToken_ReturnsFalseWithoutRequest(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestNoop_AlwaysAllows(t *testing.T) {
+	ok, err := Noop{}.Verify(context.Background(), "", "")
+	require.NoError(t, err)
+	assert.True(t, ok, "关闭人机验证后空 token 也应放行")
+}
+
 func TestVerify_ServerError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)

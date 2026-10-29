@@ -17,10 +17,10 @@ class AuthRepository @Inject constructor(
     private val apiService: ApiService,
     private val tokenDataStore: TokenDataStore
 ) {
-    suspend fun register(email: String, password: String, turnstileToken: String): ApiResult<UserDto> = wrap(
+    suspend fun register(email: String, password: String): ApiResult<UserDto> = wrap(
         fallbackMessage = "注册失败"
     ) {
-        val response = apiService.register(RegisterRequest(email, password, turnstileToken))
+        val response = apiService.register(RegisterRequest(email, password))
         if (response.success && response.data != null) {
             tokenDataStore.saveToken(
                 token = response.data.token,
@@ -33,10 +33,10 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun login(email: String, password: String, turnstileToken: String): ApiResult<UserDto> = wrap(
+    suspend fun login(email: String, password: String): ApiResult<UserDto> = wrap(
         fallbackMessage = "登录失败"
     ) {
-        val response = apiService.login(LoginRequest(email, password, turnstileToken))
+        val response = apiService.login(LoginRequest(email, password))
         if (response.success && response.data != null) {
             tokenDataStore.saveToken(
                 token = response.data.token,
