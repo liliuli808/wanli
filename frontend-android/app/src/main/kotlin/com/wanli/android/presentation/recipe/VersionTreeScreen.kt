@@ -41,7 +41,7 @@ import com.wanli.android.presentation.components.WanLiCard
 import com.wanli.android.presentation.components.WanLiPullToRefreshBox
 import com.wanli.android.presentation.components.WanLiTopBar
 import com.wanli.android.presentation.components.cardContentPadding
-import com.wanli.android.presentation.theme.OutlineVariantGray
+import com.wanli.android.presentation.theme.OutlineVariantWarm
 
 /** 递归渲染时的最大深度上限，防止异常数据导致无限展开。 */
 private const val MAX_TREE_DEPTH = 12
@@ -196,7 +196,7 @@ private fun VersionNodeCard(
                 Modifier
                     .width(2.dp)
                     .height(40.dp)
-                    .background(OutlineVariantGray)
+                    .background(OutlineVariantWarm)
             )
             Spacer(Modifier.width(8.dp))
         }

@@ -11,30 +11,34 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
-    primary = Sage40,
-    onPrimary = CardWhite,
-    primaryContainer = Sage90,
-    onPrimaryContainer = SageOnContainer,
-    secondary = NeutralSecondary,
-    onSecondary = CardWhite,
-    secondaryContainer = NeutralSecondaryContainer,
-    onSecondaryContainer = InkPrimary,
-    tertiary = MustardDeep,
+    primary = TomatoRed,
+    onPrimary = OnTomato,
+    primaryContainer = TomatoContainer,
+    onPrimaryContainer = OnTomatoContainer,
+    secondary = CaramelAccent,
+    onSecondary = CaramelOnAccent,
+    secondaryContainer = CaramelSoft,
+    onSecondaryContainer = CaramelOnAccent,
+    tertiary = CaramelDeep,
     onTertiary = CardWhite,
-    tertiaryContainer = MustardSoft,
-    onTertiaryContainer = MustardOnAccent,
-    error = ErrorRed40,
+    tertiaryContainer = CaramelSoft,
+    onTertiaryContainer = CaramelOnAccent,
+    error = ErrorRed,
     onError = CardWhite,
-    errorContainer = ErrorRed90,
+    errorContainer = ErrorRedContainer,
     onErrorContainer = InkPrimary,
     background = CreamBackground,
     onBackground = InkPrimary,
-    surface = CreamBackground,
+    surface = CardWhite,
     onSurface = InkPrimary,
-    surfaceVariant = CreamSurfaceVariant,
+    surfaceVariant = SurfaceWarm,
     onSurfaceVariant = InkSecondary,
-    outline = OutlineGray,
-    outlineVariant = OutlineVariantGray,
+    surfaceContainer = CreamBackground,
+    surfaceContainerLow = CreamBackground,
+    surfaceContainerHigh = CardWhite,
+    surfaceContainerHighest = SurfaceWarm,
+    outline = OutlineWarm,
+    outlineVariant = OutlineVariantWarm,
 )
 
 @Composable
@@ -42,13 +46,13 @@ fun WanLiTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    // 本期不做暗黑模式（zakka 浅色风格先行），统一使用浅色方案。
+    // 本期不做暗黑模式（暖调食欲系浅色才成立），统一使用浅色方案。
     val colorScheme = LightColorScheme
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.surface.toArgb()
+            window.statusBarColor = colorScheme.background.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
         }
     }

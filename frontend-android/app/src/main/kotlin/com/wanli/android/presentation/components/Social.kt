@@ -29,9 +29,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.wanli.android.presentation.theme.MustardAccent
-import com.wanli.android.presentation.theme.MustardOnAccent
-import com.wanli.android.presentation.theme.SageSoft
+import com.wanli.android.presentation.theme.CaramelAccent
+import com.wanli.android.presentation.theme.CaramelOnAccent
+import com.wanli.android.presentation.theme.CaramelSoft
+import com.wanli.android.presentation.theme.TomatoSoft
 
 /** 圆形用户头像：有图显示图，无图显示昵称首字（鼠尾草绿底）。 */
 @Composable
@@ -50,7 +51,7 @@ fun UserAvatar(
         )
     } else {
         Box(
-            modifier = modifier.size(size).clip(CircleShape).background(SageSoft),
+            modifier = modifier.size(size).clip(CircleShape).background(TomatoSoft),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -109,27 +110,27 @@ fun RatingStars(rating: Int?, modifier: Modifier = Modifier, starSize: Dp = 16.d
             Icon(
                 imageVector = if (index < safe) Icons.Filled.Star else Icons.Outlined.StarOutline,
                 contentDescription = null,
-                tint = MustardAccent,
+                tint = CaramelAccent,
                 modifier = Modifier.size(starSize),
             )
         }
     }
 }
 
-/** 芥末黄社交徽章，如「12 人做过」「AI 推测」。 */
+/** 焦糖橙社交徽章（全圆胶囊），如「★ 12 人做过」「AI 推测」。 */
 @Composable
 fun SocialBadge(text: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.small,
-        color = MustardAccent,
+        shape = CircleShape,
+        color = CaramelSoft,
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = MustardOnAccent,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            color = CaramelOnAccent,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
 }

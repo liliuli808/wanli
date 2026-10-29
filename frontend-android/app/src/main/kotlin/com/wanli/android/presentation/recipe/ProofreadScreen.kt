@@ -49,8 +49,8 @@ import com.wanli.android.presentation.components.SocialBadge
 import com.wanli.android.presentation.components.WanLiCard
 import com.wanli.android.presentation.components.WanLiTopBar
 import com.wanli.android.presentation.components.cardContentPadding
-import com.wanli.android.presentation.theme.Sage90
-import com.wanli.android.presentation.theme.SageSoft
+import com.wanli.android.presentation.theme.TomatoContainer
+import com.wanli.android.presentation.theme.TomatoSoft
 
 @Composable
 fun ProofreadScreen(
@@ -218,7 +218,7 @@ private fun SummaryCard(
                         modifier = Modifier
                             .size(64.dp)
                             .clip(MaterialTheme.shapes.small)
-                            .background(SageSoft),
+                            .background(TomatoSoft),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -365,7 +365,7 @@ private fun StepsCard(
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
-                                .background(Sage90, CircleShape),
+                                .background(TomatoContainer, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(

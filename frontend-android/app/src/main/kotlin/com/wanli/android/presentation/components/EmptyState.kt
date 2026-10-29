@@ -22,7 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.wanli.android.presentation.theme.SageSoft
+import com.wanli.android.presentation.theme.TomatoSoft
 
 /** 居中空状态：浅绿圆底图标 + 衬线标题 + 说明 + 主/次按钮（均可选）。 */
 @Composable
@@ -42,7 +42,7 @@ fun EmptyState(
         verticalArrangement = Arrangement.Center,
     ) {
         Box(
-            modifier = Modifier.size(120.dp).clip(CircleShape).background(SageSoft),
+            modifier = Modifier.size(120.dp).clip(CircleShape).background(TomatoSoft),
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))

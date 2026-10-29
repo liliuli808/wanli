@@ -18,7 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.wanli.android.presentation.theme.CreamSurfaceVariant
+import com.wanli.android.presentation.theme.SurfaceWarm
 import com.wanli.android.presentation.theme.CardWhite
 
 /** 呼吸骨架卡片：列表加载态占位。 */
@@ -31,10 +31,10 @@ fun SkeletonCard(modifier: Modifier = Modifier) {
         label = "alpha",
     )
     Column(modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(CardWhite).padding(16.dp)) {
-        Box(Modifier.fillMaxWidth().height(160.dp).clip(MaterialTheme.shapes.small).background(CreamSurfaceVariant.copy(alpha = alpha)))
+        Box(Modifier.fillMaxWidth().height(160.dp).clip(MaterialTheme.shapes.small).background(SurfaceWarm.copy(alpha = alpha)))
         Spacer(Modifier.height(12.dp))
-        Box(Modifier.fillMaxWidth(0.6f).height(16.dp).clip(MaterialTheme.shapes.small).background(CreamSurfaceVariant.copy(alpha = alpha)))
+        Box(Modifier.fillMaxWidth(0.6f).height(16.dp).clip(MaterialTheme.shapes.small).background(SurfaceWarm.copy(alpha = alpha)))
         Spacer(Modifier.height(8.dp))
-        Box(Modifier.fillMaxWidth(0.4f).height(14.dp).clip(MaterialTheme.shapes.small).background(CreamSurfaceVariant.copy(alpha = alpha)))
+        Box(Modifier.fillMaxWidth(0.4f).height(14.dp).clip(MaterialTheme.shapes.small).background(SurfaceWarm.copy(alpha = alpha)))
     }
 }

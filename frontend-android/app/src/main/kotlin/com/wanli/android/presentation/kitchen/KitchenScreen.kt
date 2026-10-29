@@ -35,12 +35,13 @@ private val COMMON_TOOLS = listOf("炒锅", "电饭煲", "空气炸锅", "烤箱
 
 @Composable
 fun KitchenScreen(
+    onBack: () -> Unit = {},
     viewModel: KitchenViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { WanLiTopBar(title = "我的厨房") }
+        topBar = { WanLiTopBar(title = "我的厨房", onBack = onBack) }
     ) { padding ->
         WanLiPullToRefreshBox(
             isRefreshing = uiState is KitchenUiState.Loading,

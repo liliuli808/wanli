@@ -44,7 +44,9 @@ import com.wanli.android.presentation.components.StatusBanner
 import com.wanli.android.presentation.components.StatusBannerType
 import com.wanli.android.presentation.components.WanLiCard
 import com.wanli.android.presentation.components.cardContentPadding
-import com.wanli.android.presentation.theme.SageSoft
+import com.wanli.android.presentation.theme.OnTomato
+import com.wanli.android.presentation.theme.TomatoRed
+import com.wanli.android.presentation.theme.TomatoSoft
 
 private enum class LoginMode { Login, Register }
 
@@ -112,12 +114,12 @@ fun LoginScreen(
                     modifier = Modifier
                         .size(96.dp)
                         .clip(CircleShape)
-                        .background(SageSoft)
+                        .background(TomatoRed)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.SoupKitchen,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = OnTomato,
                         modifier = Modifier.size(48.dp)
                     )
                 }

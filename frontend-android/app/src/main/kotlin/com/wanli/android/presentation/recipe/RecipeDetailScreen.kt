@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.ErrorOutline
@@ -41,13 +42,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.wanli.android.data.remote.RecipeVersionData
+import com.wanli.android.presentation.components.CircleIconButton
 import com.wanli.android.presentation.components.EmptyState
 import com.wanli.android.presentation.components.ScrollableFill
 import com.wanli.android.presentation.components.SectionHeader
 import com.wanli.android.presentation.components.StatusBanner
 import com.wanli.android.presentation.components.StatusBannerType
+import com.wanli.android.presentation.components.WanLiCard
 import com.wanli.android.presentation.components.WanLiPullToRefreshBox
 import com.wanli.android.presentation.components.WanLiTopBar
+import com.wanli.android.presentation.theme.InkPrimary
+import com.wanli.android.presentation.theme.OnTomato
+import com.wanli.android.presentation.theme.TomatoRed
 
 @Composable
 fun RecipeDetailScreen(
@@ -60,9 +66,7 @@ fun RecipeDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = { WanLiTopBar(title = "菜谱详情", onBack = onBack) }
-    ) { padding ->
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         WanLiPullToRefreshBox(
             isRefreshing = uiState is RecipeDetailUiState.Loading,
             onRefresh = { viewModel.load() },
@@ -87,6 +91,7 @@ fun RecipeDetailScreen(
                 }
                 is RecipeDetailUiState.Success -> RecipeDetailContent(
                     detail = state.detail,
+                    onBack = onBack,
                     onCorrection = onCorrection,
                     onFork = onFork,
                     onAdapt = onAdapt,
@@ -100,6 +105,7 @@ fun RecipeDetailScreen(
 @Composable
 private fun RecipeDetailContent(
     detail: RecipeVersionData,
+    onBack: () -> Unit,
     onCorrection: (String) -> Unit,
     onFork: (String) -> Unit,
     onAdapt: (String) -> Unit,
@@ -110,19 +116,31 @@ private fun RecipeDetailContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        if (!detail.cover_url.isNullOrBlank()) {
-            AsyncImage(
-                model = detail.cover_url,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-            )
+        Box {
+            if (!detail.cover_url.isNullOrBlank()) {
+                AsyncImage(
+                    model = detail.cover_url,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(3f / 2f)
+                )
+            }
+            CircleIconButton(
+                onClick = onBack,
+                contentDescription = "返回",
+                modifier = Modifier.padding(12.dp),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    tint = InkPrimary,
+                )
+            }
         }
 
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
             // 视频失效警示条（AC4）
             if (detail.video_status == "EXPIRED") {
                 StatusBanner(type = StatusBannerType.WARNING) {
@@ -229,11 +247,8 @@ private fun RecipeDetailContent(
                 "食材",
                 modifier = Modifier.padding(top = 8.dp)
             )
-            Card(
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            WanLiCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                     CATEGORY_ORDER.forEach { category ->
                         val group = detail.ingredients.filter { it.category == category }
                         if (group.isNotEmpty()) {
@@ -246,15 +261,24 @@ private fun RecipeDetailContent(
                             group.forEach { ingredient ->
                                 Row(
                                     horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 3.dp)
+                                        .padding(vertical = 4.dp)
                                 ) {
+                                    Box(
+                                        Modifier
+                                            .size(5.dp)
+                                            .clip(CircleShape)
+                                            .background(TomatoRed)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
                                     Text(
                                         ingredient.name +
                                             (if (!ingredient.is_explicit) "（AI 推测）" else "") +
                                             (ingredient.substitute_for?.let { "（替代 $it）" } ?: ""),
-                                        style = MaterialTheme.typography.bodyMedium
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.weight(1f),
                                     )
                                     Text(
                                         ingredient.amount ?: "适量",
@@ -277,16 +301,13 @@ private fun RecipeDetailContent(
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(24.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = CircleShape
-                            )
+                            .size(32.dp)
+                            .background(color = TomatoRed, shape = CircleShape)
                     ) {
                         Text(
                             "${step.step_order}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            style = MaterialTheme.typography.labelMedium,
+                            color = OnTomato,
                         )
                     }
                     Column(modifier = Modifier.padding(start = 12.dp)) {

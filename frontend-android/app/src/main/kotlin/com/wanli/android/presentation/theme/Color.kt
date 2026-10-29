@@ -2,39 +2,43 @@ package com.wanli.android.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
-// —— 鼠尾草绿（主色，Stitch derived DS）——
-val Sage40 = Color(0xFF436645)          // primary
-val SageOnContainer = Color(0xFF002108) // onPrimaryContainer
-val Sage90 = Color(0xFFC5EDC3)          // primaryContainer
-val SageSoft = Color(0xFFE8F0E8)        // 浅绿横幅/空状态底衬
+// —— 番茄红（主色）——
+val TomatoRed = Color(0xFFE4572E)          // primary：主按钮 / 选中态 / 中央 FAB
+val OnTomato = Color(0xFFFFFFFF)           // onPrimary
+val TomatoContainer = Color(0xFFFFDBD0)    // primaryContainer：选中 chip / 浅红底衬
+val OnTomatoContainer = Color(0xFF410E00)  // onPrimaryContainer
+val TomatoSoft = Color(0xFFFFE9E2)         // 更浅的红底：空状态圆底、图标底托
 
-// —— 米白（背景/表面）——
-val CreamBackground = Color(0xFFFCF9F8)
-val CreamSurfaceVariant = Color(0xFFE4E2E1)
-val CardWhite = Color(0xFFFFFFFF)
+// —— 奶油底与白卡 ——
+val CreamBackground = Color(0xFFFFF8F2)    // background
+val CardWhite = Color(0xFFFFFFFF)          // surface：卡片
+val SurfaceWarm = Color(0xFFF5E9E1)        // surfaceVariant：分组底 / 输入框
 
-// —— 中性文字/描边 ——
-val InkPrimary = Color(0xFF1B1C1C)
-val InkSecondary = Color(0xFF424841)
-val OutlineGray = Color(0xFF727970)
-val OutlineVariantGray = Color(0xFFC2C8BE)
+// —— 暖墨棕文字与描边 ——
+val InkPrimary = Color(0xFF2B1A12)         // onSurface
+val InkSecondary = Color(0xFF7A6559)       // onSurfaceVariant
+val OutlineWarm = Color(0xFFE6D5C9)        // outline
+val OutlineVariantWarm = Color(0xFFD8C4B5) // outlineVariant
 
-// —— 芥末黄（社交高光：评分/徽章/AI 推测）——
-val MustardAccent = Color(0xFFD9A441)   // 后续任务使用（评分星/徽章/品牌描边）
-val MustardOnAccent = Color(0xFF271900)
-val MustardSoft = Color(0xFFFFDEAA)
-val MustardDeep = Color(0xFF7C5700)
+// —— 焦糖橙（次级高光：评分 / 徽章）——
+val CaramelAccent = Color(0xFFF2A541)
+val CaramelOnAccent = Color(0xFF2B1700)
+val CaramelSoft = Color(0xFFFFE0B2)
+val CaramelDeep = Color(0xFF8A5A00)
 
-// —— 中性灰（M3 secondary 槽位）——
-val NeutralSecondary = Color(0xFF5F5E59)
-val NeutralSecondaryContainer = Color(0xFFE5E2DB)
+// —— 中性槽位（M3 secondary）——
+val WarmSecondary = Color(0xFF7A6559)
+val WarmSecondaryContainer = Color(0xFFF5E9E1)
 
-// —— 语义色（StatusBanner 等使用）——
-val ErrorRed40 = Color(0xFFBA1A1A)
-val ErrorRed90 = Color(0xFFFFDAD6)
-val SuccessGreen40 = Color(0xFF436645)
-val SuccessGreen90 = Color(0xFFDBEBD2)
-val WarningAmber40 = Color(0xFF7C5700)
-val WarningAmber90 = Color(0xFFFFF3E0)
-val InfoSage40 = Sage40
-val InfoSage90 = SageSoft
+// —— 语义色 ——
+val ErrorRed = Color(0xFFB3261E)
+val ErrorRedContainer = Color(0xFFFFDAD6)
+val SuccessGreen = Color(0xFF4F7A3F)
+val SuccessGreenContainer = Color(0xFFDDEBD3)
+val WarningAmber = Color(0xFFB26A00)
+val WarningAmberContainer = Color(0xFFFFF3E0)
+val InfoTomato = TomatoRed
+val InfoTomatoContainer = TomatoContainer
+
+// —— 暖色柔阴影（卡片浮起）——
+val WarmShadow = Color(0x1AE4572E)         // rgba(228,87,46,0.10)

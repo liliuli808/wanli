@@ -47,9 +47,9 @@ import com.wanli.android.presentation.components.StatusBannerType
 import com.wanli.android.presentation.components.WanLiCard
 import com.wanli.android.presentation.components.WanLiTopBar
 import com.wanli.android.presentation.components.cardContentPadding
-import com.wanli.android.presentation.theme.MustardDeep
-import com.wanli.android.presentation.theme.MustardSoft
-import com.wanli.android.presentation.theme.WarningAmber40
+import com.wanli.android.presentation.theme.CaramelDeep
+import com.wanli.android.presentation.theme.CaramelSoft
+import com.wanli.android.presentation.theme.WarningAmber
 
 @Composable
 fun AdaptRecipeScreen(
@@ -256,7 +256,7 @@ private fun MissingSection(missing: List<String>) {
                 Icon(
                     imageVector = Icons.Outlined.WarningAmber,
                     contentDescription = null,
-                    tint = WarningAmber40
+                    tint = WarningAmber
                 )
                 Text(
                     name,
@@ -278,7 +278,7 @@ private fun FlavorSection(flavorChanges: List<String>) {
     if (flavorChanges.isEmpty()) return
     SectionHeader("口味变化")
     Surface(
-        color = MustardSoft,
+        color = CaramelSoft,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -289,7 +289,7 @@ private fun FlavorSection(flavorChanges: List<String>) {
             Icon(
                 imageVector = Icons.Outlined.Lightbulb,
                 contentDescription = null,
-                tint = MustardDeep
+                tint = CaramelDeep
             )
             Column(
                 modifier = Modifier.padding(start = 12.dp),

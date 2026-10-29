@@ -21,14 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.wanli.android.presentation.theme.ErrorRed40
-import com.wanli.android.presentation.theme.ErrorRed90
-import com.wanli.android.presentation.theme.InfoSage40
-import com.wanli.android.presentation.theme.InfoSage90
-import com.wanli.android.presentation.theme.SuccessGreen40
-import com.wanli.android.presentation.theme.SuccessGreen90
-import com.wanli.android.presentation.theme.WarningAmber40
-import com.wanli.android.presentation.theme.WarningAmber90
+import com.wanli.android.presentation.theme.ErrorRed
+import com.wanli.android.presentation.theme.ErrorRedContainer
+import com.wanli.android.presentation.theme.InfoTomato
+import com.wanli.android.presentation.theme.InfoTomatoContainer
+import com.wanli.android.presentation.theme.SuccessGreen
+import com.wanli.android.presentation.theme.SuccessGreenContainer
+import com.wanli.android.presentation.theme.WarningAmber
+import com.wanli.android.presentation.theme.WarningAmberContainer
 
 /** 状态条语义类型，决定图标与配色。 */
 enum class StatusBannerType(
@@ -38,23 +38,23 @@ enum class StatusBannerType(
 ) {
     INFO(
         icon = Icons.Default.Info,
-        containerColor = InfoSage90,
-        contentColor = InfoSage40
+        containerColor = InfoTomatoContainer,
+        contentColor = InfoTomato
     ),
     SUCCESS(
         icon = Icons.Default.CheckCircle,
-        containerColor = SuccessGreen90,
-        contentColor = SuccessGreen40
+        containerColor = SuccessGreenContainer,
+        contentColor = SuccessGreen
     ),
     WARNING(
         icon = Icons.Default.Warning,
-        containerColor = WarningAmber90,
-        contentColor = WarningAmber40
+        containerColor = WarningAmberContainer,
+        contentColor = WarningAmber
     ),
     ERROR(
         icon = Icons.Default.Warning,
-        containerColor = ErrorRed90,
-        contentColor = ErrorRed40
+        containerColor = ErrorRedContainer,
+        contentColor = ErrorRed
     )
 }
 

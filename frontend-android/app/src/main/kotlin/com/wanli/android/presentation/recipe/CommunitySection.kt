@@ -46,7 +46,7 @@ import com.wanli.android.presentation.components.AuthorRow
 import com.wanli.android.presentation.components.EmptyState
 import com.wanli.android.presentation.components.RatingStars
 import com.wanli.android.presentation.components.SectionHeader
-import com.wanli.android.presentation.theme.MustardAccent
+import com.wanli.android.presentation.theme.CaramelAccent
 
 @Composable
 fun CommunitySection(
@@ -210,7 +210,7 @@ private fun CookingRecordDialog(
                                 imageVector = if (value <= rating) Icons.Filled.Star
                                     else Icons.Outlined.StarOutline,
                                 contentDescription = "$value 星",
-                                tint = MustardAccent
+                                tint = CaramelAccent
                             )
                         }
                     }
