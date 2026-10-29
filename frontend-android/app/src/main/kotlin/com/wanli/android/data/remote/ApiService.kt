@@ -102,6 +102,10 @@ interface ApiService {
     @GET("me/adaptations")
     suspend fun getMyAdaptations(): MyAdaptationsResponse
 
+    /** 我导入但还没校对的解析草稿（解析成功即写库，不发布就不进发现页）。 */
+    @GET("me/recipe-drafts")
+    suspend fun getMyRecipeDrafts(): MyRecipeDraftsResponse
+
     @GET("recipe-versions/{id}/comments")
     suspend fun getComments(@Path("id") id: String): CommentsResponse
 
@@ -495,6 +499,29 @@ data class MyAdaptationDto(
     val parent_id: String? = null,
     val title: String,
     val is_public: Boolean,
+    val created_at: String? = null
+)
+
+@Serializable
+data class MyRecipeDraftsResponse(
+    val success: Boolean,
+    val data: MyRecipeDraftsData? = null,
+    val error: ErrorBody? = null
+)
+
+@Serializable
+data class MyRecipeDraftsData(
+    val items: List<RecipeDraftDto> = emptyList()
+)
+
+@Serializable
+data class RecipeDraftDto(
+    val recipe_id: String,
+    val recipe_version_id: String,
+    val title: String,
+    val bvid: String = "",
+    val cover_url: String? = null,
+    val video_status: String = "ACTIVE",
     val created_at: String? = null
 )
 
