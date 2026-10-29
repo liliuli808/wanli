@@ -2,9 +2,12 @@ package com.wanli.android.presentation.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wanli.android.data.local.SavedCredentials
+import com.wanli.android.data.local.TokenDataStore
 import com.wanli.android.data.remote.ApiResult
 import com.wanli.android.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -14,31 +17,50 @@ import javax.inject.Named
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val tokenDataStore: TokenDataStore,
     @Named("serverRootUrl") private val serverRootUrl: String
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState
 
+    /** 上次「记住密码」保存的账号密码，用于登录页自动填充。 */
+    val savedCredentials: Flow<SavedCredentials?> = tokenDataStore.savedCredentials
+
     val captchaUrl: String
         get() = "$serverRootUrl/captcha"
 
-    fun register(email: String, password: String, turnstileToken: String) {
-        viewModelScope.launch {
-            _uiState.value = LoginUiState.Loading
-            _uiState.value = when (val result = authRepository.register(sanitizeEmail(email), password, turnstileToken)) {
-                is ApiResult.Success -> LoginUiState.LoggedIn
-                is ApiResult.Error -> LoginUiState.Error(result.message)
-                is ApiResult.Loading -> LoginUiState.Loading
-            }
+    fun register(email: String, password: String, turnstileToken: String, remember: Boolean) {
+        submit(remember, email, password) {
+            authRepository.register(sanitizeEmail(email), password, turnstileToken)
         }
     }
 
-    fun login(email: String, password: String, turnstileToken: String) {
+    fun login(email: String, password: String, turnstileToken: String, remember: Boolean) {
+        submit(remember, email, password) {
+            authRepository.login(sanitizeEmail(email), password, turnstileToken)
+        }
+    }
+
+    private fun <T> submit(
+        remember: Boolean,
+        email: String,
+        password: String,
+        request: suspend () -> ApiResult<T>
+    ) {
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
-            _uiState.value = when (val result = authRepository.login(sanitizeEmail(email), password, turnstileToken)) {
-                is ApiResult.Success -> LoginUiState.LoggedIn
+            _uiState.value = when (val result = request()) {
+                is ApiResult.Success -> {
+                    // 先落盘再切状态：页面随登录成功出栈，晚一步就可能被取消
+                    val normalized = sanitizeEmail(email)
+                    if (remember) {
+                        tokenDataStore.saveCredentials(normalized, password)
+                    } else {
+                        tokenDataStore.clearCredentials()
+                    }
+                    LoginUiState.LoggedIn
+                }
                 is ApiResult.Error -> LoginUiState.Error(result.message)
                 is ApiResult.Loading -> LoginUiState.Loading
             }

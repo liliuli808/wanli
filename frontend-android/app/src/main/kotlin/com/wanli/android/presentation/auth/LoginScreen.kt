@@ -1,9 +1,11 @@
 package com.wanli.android.presentation.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SoupKitchen
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -61,6 +64,20 @@ fun LoginScreen(
     var turnstileToken by remember { mutableStateOf<String?>(null) }
     var mode by remember { mutableStateOf(LoginMode.Login) }
     var widgetEpoch by remember { mutableStateOf(0) }
+    var remember by remember { mutableStateOf(true) }
+
+    // 上次记住的账号密码自动填一次；之后用户自己改过就不再覆盖
+    val savedCredentials by viewModel.savedCredentials.collectAsStateWithLifecycle(initialValue = null)
+    var prefilled by remember { mutableStateOf(false) }
+    LaunchedEffect(savedCredentials) {
+        val credentials = savedCredentials ?: return@LaunchedEffect
+        if (!prefilled) {
+            email = credentials.email
+            password = credentials.password
+            remember = true
+            prefilled = true
+        }
+    }
 
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.LoggedIn) {
@@ -85,9 +102,9 @@ fun LoginScreen(
     val submit: () -> Unit = {
         turnstileToken?.let { token ->
             if (mode == LoginMode.Login) {
-                viewModel.login(email, password, token)
+                viewModel.login(email, password, token, remember)
             } else {
-                viewModel.register(email, password, token)
+                viewModel.register(email, password, token, remember)
             }
         }
     }
@@ -163,7 +180,25 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { remember = !remember }
+                    ) {
+                        Checkbox(
+                            checked = remember,
+                            onCheckedChange = { remember = it },
+                        )
+                        Text(
+                            text = "记住密码",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     key(widgetEpoch) {
                         TurnstileWidget(
