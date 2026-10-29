@@ -33,8 +33,13 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # ubuntu-latest 镜像已预装 Android SDK（ANDROID_HOME），不再用 setup-android：
+      # 它默认执行 `sdkmanager tools`，新版 cmdline-tools 已无该包，会直接失败。
+      - name: Check Android SDK
+        run: |
+          test -n "$ANDROID_HOME" || { echo "::error::ANDROID_HOME 未设置"; exit 1; }
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" 2>/dev/null | tail -5 || true
 
       # 有签名 secrets 时打正式签名包；没有时退回 debug 签名（仍可安装）
       - name: Configure signing
