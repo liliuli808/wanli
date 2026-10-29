@@ -26,6 +26,7 @@ import com.wanli.android.presentation.components.ErrorMessage
 import com.wanli.android.presentation.components.SectionHeader
 import com.wanli.android.presentation.components.SkeletonCard
 import com.wanli.android.presentation.components.WanLiCard
+import com.wanli.android.presentation.components.WanLiFilterChip
 import com.wanli.android.presentation.components.WanLiPullToRefreshBox
 import com.wanli.android.presentation.components.WanLiTopBar
 import com.wanli.android.presentation.components.cardContentPadding
@@ -122,7 +123,7 @@ private fun ChipSection(
             FlowRow(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 options.forEach { option ->
                     val isSelected = option in selected
-                    FilterChip(
+                    WanLiFilterChip(
                         selected = isSelected,
                         onClick = {
                             val newSelection = if (isSelected) {
@@ -132,7 +133,7 @@ private fun ChipSection(
                             }
                             onSelectionChanged(newSelection)
                         },
-                        label = { Text(option) },
+                        label = option,
                         modifier = Modifier.padding(end = 8.dp, bottom = 4.dp)
                     )
                 }

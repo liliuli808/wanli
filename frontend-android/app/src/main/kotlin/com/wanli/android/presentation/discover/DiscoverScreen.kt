@@ -41,6 +41,7 @@ import com.wanli.android.presentation.components.ErrorMessage
 import com.wanli.android.presentation.components.SkeletonCard
 import com.wanli.android.presentation.components.SocialBadge
 import com.wanli.android.presentation.components.WanLiCard
+import com.wanli.android.presentation.components.WanLiFilterChip
 import com.wanli.android.presentation.components.WanLiPullToRefreshBox
 import com.wanli.android.presentation.components.WanLiTopBar
 import com.wanli.android.presentation.components.cardContentPadding
@@ -141,24 +142,7 @@ internal fun discoverItemKey(item: RecipeSummaryDto): String = item.recipe_versi
 
 @Composable
 private fun SortChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(label, style = MaterialTheme.typography.labelMedium) },
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = FilterChipDefaults.filterChipColors(
-            containerColor = CardWhite,
-            labelColor = InkPrimary,
-            selectedContainerColor = TomatoRed,
-            selectedLabelColor = OnTomato,
-        ),
-        border = FilterChipDefaults.filterChipBorder(
-            enabled = true,
-            selected = selected,
-            borderColor = OutlineWarm,
-            selectedBorderColor = TomatoRed,
-        ),
-    )
+    WanLiFilterChip(selected = selected, onClick = onClick, label = label)
 }
 
 /** 双列瀑布流卡片：图片按 id 取三种比例错落，卡片只留标题与作者。 */

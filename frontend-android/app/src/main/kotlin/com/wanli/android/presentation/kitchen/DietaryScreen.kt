@@ -45,6 +45,7 @@ import com.wanli.android.presentation.components.SkeletonCard
 import com.wanli.android.presentation.components.StatusBanner
 import com.wanli.android.presentation.components.StatusBannerType
 import com.wanli.android.presentation.components.WanLiCard
+import com.wanli.android.presentation.components.WanLiFilterChip
 import com.wanli.android.presentation.components.WanLiPullToRefreshBox
 import com.wanli.android.presentation.components.WanLiTopBar
 import com.wanli.android.presentation.components.cardContentPadding
@@ -159,10 +160,10 @@ private fun DietaryContent(
                 modifier = Modifier.padding(top = 8.dp)
             ) {
                 RESTRICTION_TYPES.forEach { (type, label) ->
-                    FilterChip(
+                    WanLiFilterChip(
                         selected = selectedType == type,
                         onClick = { selectedType = type },
-                        label = { Text(label) }
+                        label = label,
                     )
                 }
             }
