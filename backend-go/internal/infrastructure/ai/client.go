@@ -82,15 +82,10 @@ type chatMessage struct {
 }
 
 type chatCompletionRequest struct {
-	Model          string          `json:"model"`
-	Messages       []chatMessage   `json:"messages"`
-	ResponseFormat *responseFormat `json:"response_format,omitempty"`
-	MaxTokens      int             `json:"max_tokens,omitempty"`
-	Temperature    float64         `json:"temperature,omitempty"`
-}
-
-type responseFormat struct {
-	Type string `json:"type"`
+	Model       string        `json:"model"`
+	Messages    []chatMessage `json:"messages"`
+	MaxTokens   int           `json:"max_tokens,omitempty"`
+	Temperature float64       `json:"temperature,omitempty"`
 }
 
 type chatCompletionResponse struct {
@@ -98,6 +93,7 @@ type chatCompletionResponse struct {
 		Message struct {
 			Content string `json:"content"`
 		} `json:"message"`
+		FinishReason string `json:"finish_reason"`
 	} `json:"choices"`
 	Error *struct {
 		Message string `json:"message"`
@@ -122,9 +118,8 @@ func (c *Client) ExtractRecipe(ctx context.Context, input ParseInput) (*model.Pa
 			{Role: "system", Content: parseSystemPrompt},
 			{Role: "user", Content: string(userContent)},
 		},
-		ResponseFormat: &responseFormat{Type: "json_object"},
-		MaxTokens:      4096,
-		Temperature:    0.1, // 低温度，减少编造
+		MaxTokens:   4096,
+		Temperature: 0.1, // 低温度，减少编造
 	}
 
 	resp, err := c.callAPI(ctx, reqBody)
@@ -135,9 +130,12 @@ func (c *Client) ExtractRecipe(ctx context.Context, input ParseInput) (*model.Pa
 		return nil, fmt.Errorf("AI解析失败: AI 返回空结果")
 	}
 
-	content := stripCodeFence(resp.Choices[0].Message.Content)
+	content := extractJSON(resp.Choices[0].Message.Content, hasKeys("ingredients", "steps"))
+	if content == "" {
+		return nil, fmt.Errorf("AI解析失败: 模型返回空内容 (finish_reason=%s)", resp.Choices[0].FinishReason)
+	}
 	var recipe model.ParsedRecipe
-	if err := json.Unmarshal([]byte(content), &recipe); err != nil {
+	if err := json.Unmarshal([]byte(normalizeModelJSON(content)), &recipe); err != nil {
 		return nil, fmt.Errorf("AI解析失败: 输出 JSON 无法解析: %w", err)
 	}
 	if err := recipe.Validate(); err != nil {
@@ -158,9 +156,8 @@ func (c *Client) AdaptRecipe(ctx context.Context, input AdaptationInput) (*model
 			{Role: "system", Content: adaptationSystemPrompt},
 			{Role: "user", Content: string(userContent)},
 		},
-		ResponseFormat: &responseFormat{Type: "json_object"},
-		MaxTokens:      4096,
-		Temperature:    0.1,
+		MaxTokens:   4096,
+		Temperature: 0.1,
 	}
 	resp, err := c.callAPI(ctx, reqBody)
 	if err != nil {
@@ -170,9 +167,12 @@ func (c *Client) AdaptRecipe(ctx context.Context, input AdaptationInput) (*model
 		return nil, fmt.Errorf("AI适配失败: AI 返回空结果")
 	}
 
-	content := stripCodeFence(resp.Choices[0].Message.Content)
+	content := extractJSON(resp.Choices[0].Message.Content, hasKeys("safe", "ingredients", "steps"))
+	if content == "" {
+		return nil, fmt.Errorf("AI适配失败: 模型返回空内容 (finish_reason=%s)", resp.Choices[0].FinishReason)
+	}
 	var result model.AdaptationResult
-	if err := json.Unmarshal([]byte(content), &result); err != nil {
+	if err := json.Unmarshal([]byte(normalizeModelJSON(content)), &result); err != nil {
 		return nil, fmt.Errorf("AI适配失败: 输出 JSON 无法解析: %w", err)
 	}
 	if err := result.Validate(); err != nil {
@@ -218,17 +218,88 @@ func (c *Client) callAPI(ctx context.Context, reqBody chatCompletionRequest) (*c
 	return &result, nil
 }
 
-// stripCodeFence 去掉模型可能输出的 Markdown 代码块包裹。
-func stripCodeFence(content string) string {
-	content = strings.TrimSpace(content)
-	if !strings.HasPrefix(content, "```") {
-		return content
+// extractJSON 从模型输出中取出 JSON 正文，找不到任何 JSON 时返回空串。
+//
+// 推理类模型（如 conatus 这类带 thinking 的模型）不会老老实实只输出 JSON：
+// content 里可能混入推理文字，甚至把 Prompt 里的 schema 示意原样复述一遍。
+// 因此按“候选文本 → 每个 '{' 起的可解析对象”两轮扫描，并用 want 判定哪个对象
+// 才是真正的答案（例如必须含 ingredients 字段），避免把 schema 示例当成结果。
+// 优先在 Markdown 代码块里找，其次扫描全文。
+func extractJSON(content string, want func(raw []byte) bool) string {
+	candidates := append(codeFenceBlocks(content), content)
+	for _, candidate := range candidates {
+		if s := scanJSONObjects(candidate, want); s != "" {
+			return s
+		}
 	}
-	if i := strings.Index(content, "\n"); i >= 0 {
-		content = content[i+1:]
+	// 没有匹配 want 的对象：退而返回第一个可解析对象，让上层报 schema 校验错误，
+	// 这比“模型返回空内容”更能说明问题。
+	for _, candidate := range candidates {
+		if s := scanJSONObjects(candidate, nil); s != "" {
+			return s
+		}
 	}
-	content = strings.TrimSuffix(content, "```")
-	return strings.TrimSpace(content)
+	return ""
+}
+
+// scanJSONObjects 从每个 '{' 起用 json.Decoder 试解，返回第一个满足 want 的完整
+// JSON 对象原文；want 为 nil 时不作字段要求。
+func scanJSONObjects(s string, want func(raw []byte) bool) string {
+	for i := 0; i < len(s); i++ {
+		if s[i] != '{' {
+			continue
+		}
+		dec := json.NewDecoder(strings.NewReader(s[i:]))
+		var raw json.RawMessage
+		if err := dec.Decode(&raw); err != nil || len(raw) == 0 || raw[0] != '{' {
+			continue
+		}
+		if want == nil || want(raw) {
+			return string(raw)
+		}
+	}
+	return ""
+}
+
+// hasKeys 判断 JSON 对象是否包含全部指定字段（用于识别“像结果的对象”）。
+func hasKeys(keys ...string) func(raw []byte) bool {
+	return func(raw []byte) bool {
+		var obj map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &obj); err != nil {
+			return false
+		}
+		for _, k := range keys {
+			if _, ok := obj[k]; !ok {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+// codeFenceBlocks 返回所有 Markdown 代码块的内容。
+func codeFenceBlocks(content string) []string {
+	var blocks []string
+	rest := content
+	for {
+		start := strings.Index(rest, "```")
+		if start < 0 {
+			return blocks
+		}
+		rest = rest[start+3:]
+		// 跳过语言标识行（```json 等）
+		i := strings.Index(rest, "\n")
+		if i < 0 {
+			return blocks
+		}
+		rest = rest[i+1:]
+		end := strings.Index(rest, "```")
+		if end < 0 {
+			return blocks
+		}
+		blocks = append(blocks, rest[:end])
+		rest = rest[end+3:]
+	}
 }
 
 func truncate(s string, maxLen int) string {
