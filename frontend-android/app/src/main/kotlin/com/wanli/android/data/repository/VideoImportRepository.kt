@@ -6,6 +6,7 @@ import com.wanli.android.data.remote.CreateVideoImportRequest
 import com.wanli.android.data.remote.VideoImportData
 import com.wanli.android.data.remote.VideoImportTaskData
 import com.wanli.android.data.remote.parseBaseError
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import retrofit2.HttpException
 import javax.inject.Inject
@@ -37,15 +38,19 @@ class VideoImportRepository @Inject constructor(
             // 409 BVID_ALREADY_PARSED：重复视频，提示并跳转已有菜谱
             val errorBody = e.parseBaseError()
             if (errorBody?.code == "BVID_ALREADY_PARSED") {
+                val details = errorBody.details as? JsonObject
                 SubmitResult.Duplicate(
-                    recipeId = errorBody.details?.get("recipe_id")?.jsonPrimitive?.content,
-                    recipeVersionId = errorBody.details?.get("recipe_version_id")?.jsonPrimitive?.content,
+                    recipeId = details?.get("recipe_id")?.jsonPrimitive?.content,
+                    recipeVersionId = details?.get("recipe_version_id")?.jsonPrimitive?.content,
                     message = errorBody.message
                 )
             } else {
                 SubmitResult.Error(
                     code = errorBody?.code ?: "HTTP_${e.code()}",
-                    message = errorBody?.message ?: "提交失败，请稍后再试"
+                    // details 里是服务端给出的具体原因（如「请输入有效的B站视频链接」），优先展示
+                    message = errorBody?.detailText
+                        ?: errorBody?.message
+                        ?: "提交失败，请稍后再试"
                 )
             }
         } catch (e: Exception) {

@@ -103,8 +103,9 @@
 - **Headers**: `Authorization: Bearer <token>`
 - **Body**:
   ```json
-  { "url": "https://www.bilibili.com/video/BV1xx411c7xx/" }
+  { "url": "【标题-哔哩哔哩】 https://b23.tv/osM7T47" }
   ```
+- **说明**：`url` 支持纯链接、短链（`b23.tv` / `bili.im`）、纯 BV 号，以及 B 站 App 的整段分享文案；服务端会自动提取其中的链接。
 - **返回**：`201 Created`
   ```json
   {
@@ -117,6 +118,7 @@
   }
   ```
 - **去重冲突**：`409 BVID_ALREADY_PARSED` 时 `error.details` 携带 `recipe_id` 与 `recipe_version_id`（已公开的 SOURCE 版本；若来源版尚未发布则仅返回 `recipe_id`），客户端可直接跳转已有菜谱详情页。
+- **需要登录 B 站**：任务失败时 `error_code = BILIBILI_LOGIN_REQUIRED`，表示该视频字幕仅登录可见，提示用户到「我的 - B 站账号」授权后重试。
 
 #### 2. 查询解析任务状态
 - **请求**：`GET /api/v1/video-imports/:task_id`
@@ -369,6 +371,23 @@
   }
   ```
 - **说明**：`restriction_type` 限定为 `ALLERGY`（过敏）、`DISLIKE`（不吃）、`MEDICAL`（医疗控糖/控盐）；更新为全量替换。
+
+#### 5. B 站账号授权（读取仅登录可见的字幕）
+- **请求**：`GET /api/v1/me/bilibili-credential` | `PUT /api/v1/me/bilibili-credential` | `DELETE /api/v1/me/bilibili-credential`
+- **Headers**: `Authorization: Bearer <token>`
+- **Body (PUT)**:
+  ```json
+  { "sessdata": "abc123%2C1793262567%2Cxyz*11" }
+  ```
+- **返回**：`200 OK`
+  ```json
+  { "success": true, "data": { "bound": true, "mid": "123456", "uname": "小碗" } }
+  ```
+- **说明**：
+  - 只接受 `SESSDATA` 值（可从 `SESSDATA=` 前缀或引号中自动清洗），不接受完整 Cookie 串。
+  - 服务端先用 B 站 `nav` 接口校验，再用 AES-256-GCM 加密落库；**任何接口都不会回传凭证内容**。
+  - `DELETE` 清除授权，返回 `{ "bound": false }`。
+  - 错误码：`BILIBILI_CREDENTIAL_INVALID`（400，无效或已过期）、`BILIBILI_CREDENTIAL_DISABLED`（503，服务端未配置加密密钥）。
 
 ---
 

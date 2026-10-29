@@ -40,14 +40,20 @@ type recipeExtractor interface {
 	ExtractRecipe(ctx context.Context, input ai.ParseInput) (*model.ParsedRecipe, error)
 }
 
+// BilibiliCredentialProvider 提供用户授权的 B 站 SESSDATA；未授权时返回空串。
+type BilibiliCredentialProvider interface {
+	Sessdata(ctx context.Context, userID uuid.UUID) string
+}
+
 // VideoImportService 串起“提交 → 拉取文本 → AI 解析 → 保存草稿”的完整流水线。
 type VideoImportService struct {
-	tasks    *ImportTaskService
-	executor taskSubmitter
-	bili     *bilibili.Client
-	ai       recipeExtractor
-	recipes  repository.RecipeRepository
-	logger   *slog.Logger
+	tasks       *ImportTaskService
+	executor    taskSubmitter
+	bili        *bilibili.Client
+	ai          recipeExtractor
+	recipes     repository.RecipeRepository
+	credentials BilibiliCredentialProvider
+	logger      *slog.Logger
 }
 
 // NewVideoImportService 创建视频导入服务。
@@ -70,6 +76,24 @@ func NewVideoImportService(
 		recipes:  recipes,
 		logger:   logger,
 	}
+}
+
+// WithCredentials 注入用户级 B 站凭证提供者；为 nil 时全部按匿名/服务端兜底 Cookie 访问。
+func (s *VideoImportService) WithCredentials(p BilibiliCredentialProvider) *VideoImportService {
+	s.credentials = p
+	return s
+}
+
+// clientFor 返回带用户授权 Cookie 的 B 站客户端；用户未授权时沿用默认客户端。
+func (s *VideoImportService) clientFor(ctx context.Context, userID uuid.UUID) *bilibili.Client {
+	if s.credentials == nil {
+		return s.bili
+	}
+	sessdata := s.credentials.Sessdata(ctx, userID)
+	if sessdata == "" {
+		return s.bili
+	}
+	return s.bili.WithCookie("SESSDATA=" + sessdata)
 }
 
 // Submit 校验链接、按 BVID 去重，然后创建任务并异步执行解析。
@@ -152,23 +176,27 @@ func (s *VideoImportService) Process(ctx context.Context, taskID string, userID 
 	if err := s.tasks.Transition(ctx, taskID, model.ImportTaskFetching, "正在获取视频信息"); err != nil {
 		return err
 	}
-	videoInfo, err := s.bili.GetVideoInfo(ctx, task.BVID)
+	bili := s.clientFor(ctx, userID)
+	videoInfo, err := bili.GetVideoInfo(ctx, task.BVID)
 	if err != nil {
 		return fail(apperror.ErrVideoFetchFailed, err)
 	}
 
 	// Step 2: 获取字幕；无可用字幕时立即终止，简介/评论只能作为字幕补充。
-	subtitleSegments, hasSubtitle, err := s.bili.FetchBestSubtitle(ctx, videoInfo)
+	subtitleSegments, hasSubtitle, err := bili.FetchBestSubtitle(ctx, videoInfo)
 	if err != nil {
 		s.logger.Warn("字幕获取失败，终止解析",
 			slog.String("task_id", taskID), slog.String("error", err.Error()))
+		if errors.Is(err, bilibili.ErrLoginRequired) {
+			return fail(apperror.ErrBilibiliLoginRequired, err)
+		}
 		return fail(apperror.ErrSubtitleUnavailable, fmt.Errorf("fetch subtitle: %w", err))
 	}
 	if !hasSubtitle || len(subtitleSegments) == 0 {
 		return fail(apperror.ErrSubtitleUnavailable, errors.New("no usable subtitle"))
 	}
 
-	comments, _ := s.bili.GetRecipeLikeComments(ctx, videoInfo.AID, 5)
+	comments, _ := bili.GetRecipeLikeComments(ctx, videoInfo.AID, 5)
 	input := ai.ParseInput{
 		BVID:        videoInfo.BVID,
 		Title:       videoInfo.Title,

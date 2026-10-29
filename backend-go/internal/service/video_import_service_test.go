@@ -127,10 +127,56 @@ func fakeBiliServer(t *testing.T, noSubtitle bool) *httptest.Server {
 	mux.HandleFunc("/x/v2/reply/main", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"code": 0, "message": "0", "data": {"top": {"upper": {"rpid": 1, "like": 10, "content": {"message": "配方：五花肉500克，生抽2勺，小火炖30分钟"}, "member": {"uname": "作者"}}}, "replies": []}}`)
 	})
+	mux.HandleFunc("/x/web-interface/nav", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"code":-101,"data":{"wbi_img":{
+			"img_url":"https://i0.hdslb.com/bfs/wbi/7cd084941338484aae1ad9425b84077c.png",
+			"sub_url":"https://i0.hdslb.com/bfs/wbi/4932caff0ff746eab6f01bf08b70ac45.png"}}}`)
+	})
+	mux.HandleFunc("/x/player/wbi/v2", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"code":0,"data":{"need_login_subtitle":false,"subtitle":{"subtitles":[]}}}`)
+	})
 
 	server = httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 	return server
+}
+
+// fakeBiliLoginRequiredServer 模拟“字幕仅登录可见”的视频。
+func fakeBiliLoginRequiredServer(t *testing.T, gotCookie *string) *httptest.Server {
+	t.Helper()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/x/web-interface/view", func(w http.ResponseWriter, r *http.Request) {
+		if gotCookie != nil {
+			*gotCookie = r.Header.Get("Cookie")
+		}
+		fmt.Fprint(w, `{"code":0,"message":"0","data":{
+			"aid":123456,"bvid":"BV1xx411c7xx","title":"番茄炖牛腩","desc":"","duration":300,"pic":"",
+			"owner":{"name":"隋卞一做"},
+			"pages":[{"cid":111,"page":1,"part":"正片","duration":300}],
+			"subtitle":{"list":[]}}}`)
+	})
+	mux.HandleFunc("/x/web-interface/nav", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"code":-101,"data":{"wbi_img":{
+			"img_url":"https://i0.hdslb.com/bfs/wbi/7cd084941338484aae1ad9425b84077c.png",
+			"sub_url":"https://i0.hdslb.com/bfs/wbi/4932caff0ff746eab6f01bf08b70ac45.png"}}}`)
+	})
+	mux.HandleFunc("/x/player/wbi/v2", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"code":0,"data":{"need_login_subtitle":true,"subtitle":{"subtitles":[]}}}`)
+	})
+
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+	return server
+}
+
+// fakeCredentialProvider 固定返回一个用户的 SESSDATA。
+type fakeCredentialProvider struct {
+	sessdata string
+}
+
+func (f fakeCredentialProvider) Sessdata(context.Context, uuid.UUID) string {
+	return f.sessdata
 }
 
 func fakeAIServerWithCalls(t *testing.T, content string) (*httptest.Server, *atomic.Int32) {
@@ -215,6 +261,43 @@ func TestVideoImport_Process_NoSubtitleRejectsFallbackTextBeforeAI(t *testing.T)
 	assert.Empty(t, repo.saved, "无字幕时不应落库")
 }
 
+func TestVideoImport_Process_LoginRequiredWhenAnonymous(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	aiServer, aiCalls := fakeAIServerWithCalls(t, validAIOutput)
+	svc := newImportService(t, fakeBiliLoginRequiredServer(t, nil).URL, aiServer.URL, repo, &noopSubmitter{})
+	ctx := context.Background()
+
+	task, err := svc.tasks.Create(ctx, "BV1xx411c7xx", "url")
+	require.NoError(t, err)
+
+	require.Error(t, svc.Process(ctx, task.TaskID, uuid.New()))
+
+	got, err := svc.Get(ctx, task.TaskID)
+	require.NoError(t, err)
+	assert.Equal(t, model.ImportTaskFailed, got.Status)
+	assert.Equal(t, "BILIBILI_LOGIN_REQUIRED", got.ErrorCode)
+	assert.Zero(t, aiCalls.Load(), "需要登录时不应调用 AI")
+}
+
+func TestVideoImport_Process_UsesUserCredential(t *testing.T) {
+	var gotCookie string
+	biliServer := fakeBiliLoginRequiredServer(t, &gotCookie)
+
+	repo := newFakeRecipeRepo()
+	svc := newImportService(t, biliServer.URL, fakeAIServer(t, validAIOutput).URL, repo, &noopSubmitter{})
+	svc.WithCredentials(fakeCredentialProvider{sessdata: "abc123%2C1793262567%2Cxyz*11"})
+	ctx := context.Background()
+
+	task, err := svc.tasks.Create(ctx, "BV1xx411c7xx", "url")
+	require.NoError(t, err)
+
+	// 即使视频需要登录，带上用户授权后也不再因登录态失败
+	_ = svc.Process(ctx, task.TaskID, uuid.New())
+
+	assert.Contains(t, gotCookie, "SESSDATA=abc123%2C1793262567%2Cxyz*11",
+		"访问 B 站时应携带用户授权的 SESSDATA")
+}
+
 func TestVideoImport_Process_AIFailure(t *testing.T) {
 	repo := newFakeRecipeRepo()
 	svc := newImportService(t, fakeBiliServer(t, false).URL, fakeAIServer(t, "垃圾输出").URL, repo, &noopSubmitter{})
@@ -259,6 +342,17 @@ func TestVideoImport_Submit_InvalidURL(t *testing.T) {
 
 	_, err := svc.Submit(context.Background(), uuid.New(), "https://www.youtube.com/watch?v=abc")
 	assert.ErrorIs(t, err, ErrInvalidVideoURL)
+}
+
+func TestVideoImport_Submit_ShareText(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	submitter := &noopSubmitter{}
+	svc := newImportService(t, "http://unused", "http://unused", repo, submitter)
+
+	shareText := "【隋卞一做 |怎么又简单又好吃啊！有手就行版本的番茄炖牛腩！-哔哩哔哩】 https://www.bilibili.com/video/BV1RN4y1r7dt"
+	task, err := svc.Submit(context.Background(), uuid.New(), shareText)
+	require.NoError(t, err)
+	assert.Equal(t, "BV1RN4y1r7dt", task.BVID)
 }
 
 func TestVideoImport_Submit_Duplicate(t *testing.T) {

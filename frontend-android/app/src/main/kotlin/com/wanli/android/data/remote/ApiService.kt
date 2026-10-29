@@ -27,6 +27,17 @@ interface ApiService {
     @PUT("me/profile")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): MeResponse
 
+    @GET("me/bilibili-credential")
+    suspend fun getBilibiliCredential(): BilibiliCredentialResponse
+
+    @PUT("me/bilibili-credential")
+    suspend fun bindBilibiliCredential(
+        @Body request: BindBilibiliCredentialRequest
+    ): BilibiliCredentialResponse
+
+    @DELETE("me/bilibili-credential")
+    suspend fun unbindBilibiliCredential(): BaseResponse
+
     @GET("feed/cooking-records")
     suspend fun getCookingFeed(@Query("limit") limit: Int): CookingFeedResponse
 
@@ -163,7 +174,7 @@ data class HealthData(
 data class ErrorBody(
     val code: String,
     val message: String,
-    val details: kotlinx.serialization.json.JsonObject? = null
+    val details: kotlinx.serialization.json.JsonElement? = null
 )
 
 @Serializable
@@ -210,6 +221,27 @@ data class MeResponse(
 data class UpdateProfileRequest(
     val nickname: String,
     @SerialName("avatar_url") val avatarUrl: String? = null,
+)
+
+/** 只提交 B 站登录 Cookie 中的 SESSDATA 值，不上传完整 Cookie。 */
+@Serializable
+data class BindBilibiliCredentialRequest(
+    val sessdata: String
+)
+
+@Serializable
+data class BilibiliCredentialData(
+    val bound: Boolean = false,
+    val mid: String = "",
+    val uname: String = "",
+    @SerialName("updated_at") val updatedAt: String? = null,
+)
+
+@Serializable
+data class BilibiliCredentialResponse(
+    val success: Boolean,
+    val data: BilibiliCredentialData? = null,
+    val error: ErrorBody? = null,
 )
 
 @Serializable

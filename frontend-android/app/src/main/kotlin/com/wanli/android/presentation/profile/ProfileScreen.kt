@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Kitchen
 import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material.icons.outlined.RateReview
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Shield
@@ -73,6 +74,7 @@ fun ProfileScreen(
     onOpenMyAdaptations: () -> Unit = {},
     onOpenDietary: () -> Unit = {},
     onOpenKitchen: () -> Unit = {},
+    onOpenBilibiliAuth: () -> Unit = {},
 ) {
     Scaffold(
         topBar = { WanLiTopBar(title = "我的") }
@@ -95,6 +97,7 @@ fun ProfileScreen(
             onOpenMyAdaptations = onOpenMyAdaptations,
             onOpenDietary = onOpenDietary,
             onOpenKitchen = onOpenKitchen,
+            onOpenBilibiliAuth = onOpenBilibiliAuth,
             padding = padding,
         )
     }
@@ -107,6 +110,7 @@ private fun LoggedInProfile(
     onOpenMyAdaptations: () -> Unit,
     onOpenDietary: () -> Unit,
     onOpenKitchen: () -> Unit,
+    onOpenBilibiliAuth: () -> Unit,
     padding: PaddingValues,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
@@ -142,6 +146,7 @@ private fun LoggedInProfile(
                 onOpenMyAdaptations = onOpenMyAdaptations,
                 onOpenDietary = onOpenDietary,
                 onOpenKitchen = onOpenKitchen,
+                onOpenBilibiliAuth = onOpenBilibiliAuth,
                 onUpdateNickname = viewModel::updateNickname,
             )
         }
@@ -156,6 +161,7 @@ private fun ProfileContent(
     onOpenMyAdaptations: () -> Unit,
     onOpenDietary: () -> Unit,
     onOpenKitchen: () -> Unit,
+    onOpenBilibiliAuth: () -> Unit,
     onUpdateNickname: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -227,6 +233,8 @@ private fun ProfileContent(
                 MenuRow(icon = Icons.Outlined.Kitchen, title = "厨房设置", onClick = onOpenKitchen)
                 MenuDivider()
                 MenuRow(icon = Icons.Outlined.Shield, title = "忌口管理", onClick = onOpenDietary)
+                MenuDivider()
+                MenuRow(icon = Icons.Outlined.PlayCircleOutline, title = "B 站账号", onClick = onOpenBilibiliAuth)
             }
         }
 

@@ -23,6 +23,7 @@ import (
 	"github.com/wanli/backend-go/internal/middleware"
 	"github.com/wanli/backend-go/internal/repository"
 	"github.com/wanli/backend-go/internal/service"
+	"github.com/wanli/backend-go/pkg/secretbox"
 )
 
 // Server 聚合 HTTP 服务依赖。
@@ -147,6 +148,39 @@ func New(
 		logger.Warn("storage not available, upload endpoint disabled")
 	}
 
+	// B 站客户端：服务端兜底 Cookie + 用户级授权 Cookie 共用同一个实例
+	biliClient := bilibili.NewWithCookie(bilibili.DefaultBaseURL, cfg.Bilibili.Cookie, logger)
+
+	// 用户级 B 站凭证：未配置 BILIBILI_CREDENTIAL_ENC_KEY 时由 JWT_SECRET 派生加密密钥
+	encKey := cfg.Bilibili.CredentialEncKey
+	if encKey == "" {
+		encKey = cfg.JWT.Secret
+		logger.Info("未配置 BILIBILI_CREDENTIAL_ENC_KEY，使用 JWT_SECRET 派生凭证加密密钥")
+	}
+	var credentialBox *secretbox.Box
+	if encKey != "" {
+		box, err := secretbox.New("wanli-bilibili-credential:" + encKey)
+		if err != nil {
+			logger.Error("初始化 B 站凭证加密失败，用户授权功能不可用", "error", err)
+		} else {
+			credentialBox = box
+		}
+	} else {
+		logger.Warn("缺少凭证加密密钥，用户级 B 站授权功能不可用")
+	}
+
+	var bilibiliCredentialHandler *handler.BilibiliCredentialHandler
+	var credentialProvider *service.BilibiliCredentialService
+	if db != nil && credentialBox != nil {
+		credentialProvider = service.NewBilibiliCredentialService(
+			repository.NewGormUserRepository(db),
+			credentialBox,
+			biliClient,
+			logger,
+		)
+		bilibiliCredentialHandler = handler.NewBilibiliCredentialHandler(credentialProvider)
+	}
+
 	// 视频导入（阶段 2）：需要 Redis（任务状态机）与数据库（草稿落库）同时可用
 	var videoImportHandler *handler.VideoImportHandler
 	if db != nil && rdb != nil {
@@ -164,11 +198,14 @@ func New(
 		videoImportService := service.NewVideoImportService(
 			importTaskService,
 			executor,
-			bilibili.NewWithCookie(bilibili.DefaultBaseURL, cfg.Bilibili.Cookie, logger),
+			biliClient,
 			aiPool,
 			repository.NewGormRecipeRepository(db),
 			logger,
 		)
+		if credentialProvider != nil {
+			videoImportService.WithCredentials(credentialProvider)
+		}
 		videoImportHandler = handler.NewVideoImportHandler(videoImportService)
 	} else {
 		logger.Warn("redis or database not available, video import disabled")
@@ -187,6 +224,7 @@ func New(
 		communityHandler,
 		uploadHandler,
 		messageHandler,
+		bilibiliCredentialHandler,
 	)
 
 	return &Server{
@@ -212,6 +250,7 @@ func registerRoutes(
 	communityHandler *handler.CommunityHandler,
 	uploadHandler *handler.UploadHandler,
 	messageHandler *handler.MessageHandler,
+	bilibiliCredentialHandler *handler.BilibiliCredentialHandler,
 ) {
 	// 人机验证（Turnstile）组件页面，供 Android WebView 加载
 	r.GET("/captcha", authHandler.CaptchaWidget)
@@ -248,6 +287,12 @@ func registerRoutes(
 
 			if messageHandler != nil {
 				authorized.GET("/me/messages", messageHandler.List)
+			}
+
+			if bilibiliCredentialHandler != nil {
+				authorized.GET("/me/bilibili-credential", bilibiliCredentialHandler.Get)
+				authorized.PUT("/me/bilibili-credential", bilibiliCredentialHandler.Bind)
+				authorized.DELETE("/me/bilibili-credential", bilibiliCredentialHandler.Unbind)
 			}
 
 			if videoImportHandler != nil {

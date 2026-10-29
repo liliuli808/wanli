@@ -86,6 +86,21 @@ func newFakeServer(t *testing.T) *httptest.Server {
 		}`)
 	})
 
+	mux.HandleFunc("/x/web-interface/nav", func(w http.ResponseWriter, r *http.Request) {
+		// 未登录时 code=-101，但 wbi_img 仍然有效
+		fmt.Fprint(w, `{
+			"code": -101,
+			"message": "账号未登录",
+			"data": {
+				"isLogin": false,
+				"wbi_img": {
+					"img_url": "https://i0.hdslb.com/bfs/wbi/7cd084941338484aae1ad9425b84077c.png",
+					"sub_url": "https://i0.hdslb.com/bfs/wbi/4932caff0ff746eab6f01bf08b70ac45.png"
+				}
+			}
+		}`)
+	})
+
 	server = httptest.NewTLSServer(mux)
 	t.Cleanup(server.Close)
 	return server
@@ -172,14 +187,70 @@ func TestFetchBestSubtitle_Success(t *testing.T) {
 	assert.Equal(t, "准备五花肉500克", segments[1].Content)
 }
 
+// newPlayerOnlyServer 只提供 nav + player 接口，模拟 view 接口不返回字幕轨的情况。
+func newPlayerOnlyServer(t *testing.T, needLogin bool, subtitlesJSON string) *httptest.Server {
+	t.Helper()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/x/web-interface/nav", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"code":-101,"data":{"wbi_img":{
+			"img_url":"https://i0.hdslb.com/bfs/wbi/7cd084941338484aae1ad9425b84077c.png",
+			"sub_url":"https://i0.hdslb.com/bfs/wbi/4932caff0ff746eab6f01bf08b70ac45.png"}}}`)
+	})
+	mux.HandleFunc("/x/player/wbi/v2", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `{"code":0,"data":{"need_login_subtitle":%t,"subtitle":{"subtitles":[%s]}}}`,
+			needLogin, subtitlesJSON)
+	})
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+	return server
+}
+
 func TestFetchBestSubtitle_NoSubtitle(t *testing.T) {
-	client := New("http://unused", nil)
+	server := newPlayerOnlyServer(t, false, "")
+	client := New(server.URL, nil)
 	info := &VideoInfo{BVID: "BV1xx411c7xx", CID: 111}
 
 	segments, ok, err := client.FetchBestSubtitle(context.Background(), info)
 	require.NoError(t, err)
 	assert.False(t, ok)
 	assert.Nil(t, segments)
+}
+
+func TestFetchBestSubtitle_LoginRequired(t *testing.T) {
+	server := newPlayerOnlyServer(t, true, "")
+	client := New(server.URL, nil)
+	info := &VideoInfo{BVID: "BV1xx411c7xx", CID: 111}
+
+	_, _, err := client.FetchBestSubtitle(context.Background(), info)
+	assert.ErrorIs(t, err, ErrLoginRequired)
+}
+
+func TestFetchBestSubtitle_WithCookieReadsTracks(t *testing.T) {
+	mux := http.NewServeMux()
+	var authServer *httptest.Server
+	mux.HandleFunc("/x/web-interface/nav", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"code":-101,"data":{"wbi_img":{
+			"img_url":"https://i0.hdslb.com/bfs/wbi/7cd084941338484aae1ad9425b84077c.png",
+			"sub_url":"https://i0.hdslb.com/bfs/wbi/4932caff0ff746eab6f01bf08b70ac45.png"}}}`)
+	})
+	mux.HandleFunc("/x/player/wbi/v2", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `{"code":0,"data":{"need_login_subtitle":true,"subtitle":{"subtitles":[
+			{"lan":"ai-zh","subtitle_url":"%s/subtitle-ai.json"}]}}}`, authServer.URL)
+	})
+	mux.HandleFunc("/subtitle-ai.json", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"body":[{"from":0,"to":5,"content":"登录后可见的字幕"}]}`)
+	})
+	authServer = httptest.NewServer(mux)
+	t.Cleanup(authServer.Close)
+
+	client := NewWithCookie(authServer.URL, "SESSDATA=valid", nil)
+	info := &VideoInfo{BVID: "BV1xx411c7xx", CID: 111}
+
+	segments, ok, err := client.FetchBestSubtitle(context.Background(), info)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Len(t, segments, 1)
+	assert.Equal(t, "登录后可见的字幕", segments[0].Content)
 }
 
 func TestSelectBestSubtitle(t *testing.T) {

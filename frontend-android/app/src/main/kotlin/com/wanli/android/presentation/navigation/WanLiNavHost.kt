@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import com.wanli.android.presentation.auth.LoginScreen
 import com.wanli.android.presentation.kitchen.DietaryScreen
 import com.wanli.android.presentation.main.MainScreen
+import com.wanli.android.presentation.profile.BilibiliAuthScreen
 import com.wanli.android.presentation.recipe.ProofreadScreen
 import com.wanli.android.presentation.recipe.EDIT_MODE_CORRECTION
 import com.wanli.android.presentation.recipe.EDIT_MODE_FORK
@@ -31,6 +32,7 @@ object Routes {
     const val ADAPT_RECIPE = "recipe-version/{versionId}/adapt"
     const val MY_ADAPTATIONS = "me/adaptations"
     const val DIETARY = "me/dietary-restrictions"
+    const val BILIBILI_AUTH = "me/bilibili-credential"
 
     fun recipeDetail(versionId: String) = "recipe-version/$versionId"
     fun proofread(versionId: String) = "proofread/$versionId"
@@ -56,7 +58,8 @@ fun WanLiNavHost(
                 onProofread = { versionId -> navController.navigate(Routes.proofread(versionId)) },
                 onOpenPendingCorrections = { navController.navigate(Routes.PENDING_CORRECTIONS) },
                 onOpenMyAdaptations = { navController.navigate(Routes.MY_ADAPTATIONS) },
-                onOpenDietary = { navController.navigate(Routes.DIETARY) }
+                onOpenDietary = { navController.navigate(Routes.DIETARY) },
+                onOpenBilibiliAuth = { navController.navigate(Routes.BILIBILI_AUTH) }
             )
         }
         composable(Routes.LOGIN) {
@@ -139,6 +142,12 @@ fun WanLiNavHost(
         }
         composable(Routes.DIETARY) {
             DietaryScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.BILIBILI_AUTH) {
+            BilibiliAuthScreen(
+                onBack = { navController.popBackStack() },
+                onAuthorized = { navController.popBackStack() },
+            )
         }
         composable(
             route = Routes.PROOFREAD,

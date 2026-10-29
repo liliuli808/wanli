@@ -122,6 +122,7 @@ class ImportViewModel @Inject constructor(
             if (!message.isNullOrBlank()) return message
             return when (errorCode) {
                 "SUBTITLE_NOT_AVAILABLE" -> "该视频没有可用字幕，无法解析"
+                "BILIBILI_LOGIN_REQUIRED" -> "该视频的字幕需要登录 B 站才能读取，请先在「我的 - B 站账号」中授权"
                 "AI_PARSE_FAILED" -> "AI 未能从视频中提取菜谱，可重试一次"
                 "VIDEO_FETCH_FAILED" -> "获取视频信息失败，请检查链接或稍后再试"
                 else -> "解析失败，请稍后再试"

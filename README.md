@@ -239,6 +239,7 @@ REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 
 BILIBILI_COOKIE=
+BILIBILI_CREDENTIAL_ENC_KEY=
 
 AI_API_KEY=your_openai_or_deepseek_key
 AI_BASE_URL=https://api.deepseek.com/v1
@@ -255,9 +256,14 @@ S3_SECRET_KEY=your_secret_key
 S3_BUCKET=wanli-assets
 ```
 
-`BILIBILI_COOKIE` 可选，用于读取仅登录用户可见的 B 站字幕轨。填写浏览器请求中的
-完整 `Cookie` 请求头，只能保存在后端本地 `.env` 或部署平台密钥中；禁止提交、
-写入日志或放入 Android。Cookie 更新后需要重启后端，过期后需重新获取。
+`BILIBILI_COOKIE` 可选，是服务端兜底的 B 站登录态，用于读取仅登录用户可见的字幕轨。
+填写浏览器请求中的完整 `Cookie` 请求头，只能保存在后端本地 `.env` 或部署平台密钥中；
+禁止提交、写入日志或放入 Android。Cookie 更新后需要重启后端，过期后需重新获取。
+
+更推荐的做法是**由用户在自己的账号里授权**：App 内「我的 → B 站账号」扫码登录或手动粘贴
+`SESSDATA`，后端先用 `nav` 接口校验，再用 AES-256-GCM 加密存进 `users` 表，解析时优先使用
+该用户的登录态。加密密钥来自 `BILIBILI_CREDENTIAL_ENC_KEY`，留空时由 `JWT_SECRET` 派生；
+轮换密钥会让已授权凭证失效，需要用户重新授权。凭证永远不会通过 API 回传，用户可随时解除授权。
 
 `AI_MODEL` 是发送给 `AI_BASE_URL` 所配置服务商的模型标识，默认值为
 `deepseek-chat`。修改 AI 环境变量后需要重启后端服务才能生效；模型标识必须是

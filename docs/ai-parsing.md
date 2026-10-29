@@ -15,8 +15,21 @@ Cookie 过期或被撤销后需要人工更新并重启后端。
 BILIBILI_COOKIE=
 ```
 
+### 用户级授权（优先于全局 Cookie）
+
+用户在 App「我的 → B 站账号」中扫码登录或粘贴 `SESSDATA` 后，后端会先用
+`x/web-interface/nav` 校验，再用 `BILIBILI_CREDENTIAL_ENC_KEY`（留空则由
+`JWT_SECRET` 派生）加密保存到 `users.bilibili_sessdata_enc`。解析任务创建时优先使用
+该用户的登录态，没有授权时才回落到全局 `BILIBILI_COOKIE`。
+
+- 凭证永不出现在 API 响应和日志里；用户可随时 `DELETE /api/v1/me/bilibili-credential`。
+- 轮换加密密钥会使已授权凭证失效，需要用户重新授权。
+- 字幕接口 `x/player/wbi/v2` 会带 wbi 签名（`wts` + `w_rid`），密钥来自 `nav` 的
+  `wbi_img`，缓存 1 小时，`-403` 时自动刷新重试。
+
 登录态只影响字幕可见性，不改变严格字幕拦截：携带 Cookie 后仍没有可用字幕时，
-任务返回 `SUBTITLE_NOT_AVAILABLE`，不会调用 AI。
+任务返回 `SUBTITLE_NOT_AVAILABLE`；明确返回 `need_login_subtitle` 且当前没有可用
+登录态时，任务返回 `BILIBILI_LOGIN_REQUIRED` 提示用户授权。两种情况都不会调用 AI。
 
 ---
 

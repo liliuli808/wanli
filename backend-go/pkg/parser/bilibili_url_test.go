@@ -71,6 +71,53 @@ func TestParseBVID(t *testing.T) {
 	}
 }
 
+func TestExtractURL(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "B站分享文案",
+			input: "【隋卞一做 |怎么又简单又好吃啊！有手就行版本的番茄炖牛腩！-哔哩哔哩】 https://b23.tv/osM7T47",
+			want:  "https://b23.tv/osM7T47",
+		},
+		{
+			name:  "链接后紧跟中文标点",
+			input: "【标题】https://b23.tv/osM7T47，复制链接打开",
+			want:  "https://b23.tv/osM7T47",
+		},
+		{
+			name:  "不带协议头的短链",
+			input: "【标题-哔哩哔哩】 b23.tv/osM7T47",
+			want:  "b23.tv/osM7T47",
+		},
+		{
+			name:  "纯链接保持不变",
+			input: "  https://www.bilibili.com/video/BV1xx411c7xx/?p=1  ",
+			want:  "https://www.bilibili.com/video/BV1xx411c7xx/?p=1",
+		},
+		{
+			name:  "没有链接时返回原文",
+			input: "  随便一段文字  ",
+			want:  "随便一段文字",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, ExtractURL(tt.input))
+		})
+	}
+}
+
+func TestParseBVID_ShareText(t *testing.T) {
+	// 分享文案里的完整链接应能直接提取 BV 号
+	got, err := ParseBVID("【这个红烧肉太香了-哔哩哔哩】 https://www.bilibili.com/video/BV1xx411c7xx")
+	require.NoError(t, err)
+	assert.Equal(t, "BV1xx411c7xx", got)
+}
+
 func TestResolveShortURL(t *testing.T) {
 	const realURL = "https://www.bilibili.com/video/BV1xx411c7xx/"
 

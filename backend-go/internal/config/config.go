@@ -161,7 +161,10 @@ func buildAIProviders(raw, singleKey, singleBaseURL, singleModel string) []AIPro
 }
 
 type BilibiliConfig struct {
+	// Cookie 是服务端兜底的 B 站登录态（全局单账号）。
 	Cookie string
+	// CredentialEncKey 用于加密用户授权的 SESSDATA；为空时由 JWT_SECRET 派生。
+	CredentialEncKey string
 }
 
 type TurnstileConfig struct {
@@ -261,7 +264,8 @@ func Load() (*Config, error) {
 			),
 		},
 		Bilibili: BilibiliConfig{
-			Cookie: v.GetString("BILIBILI_COOKIE"),
+			Cookie:           v.GetString("BILIBILI_COOKIE"),
+			CredentialEncKey: v.GetString("BILIBILI_CREDENTIAL_ENC_KEY"),
 		},
 		Turnstile: TurnstileConfig{
 			Enabled:   v.GetBool("TURNSTILE_ENABLED"),
