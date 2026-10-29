@@ -13,6 +13,7 @@
 3. **我的厨房，智能适配**：在 App 中勾选你厨房里已有的调料（只记录“有没有”，无需管理复杂的库存数量），设定全家人的避讳忌口与过敏源。在做任何菜前，点击“厨房适配”，AI 会立即计算替换方案，并重写一份适合你当下条件的菜谱步骤！
 4. **大字烹饪模式**：进入烹饪模式，大字卡片显示，屏幕常亮，支持单步计时，提供下一步备料预告，让厨房手忙脚乱成为过去。
 5. **美味生活，随手记录**：首版即支持在每个版本菜谱下进行评论互动，并在制作完成后通过“做过”记录，上传你的精美成品图。
+6. **应用内自更新**：新版本发布后 App 启动即提示，点一下即可下载并安装，无需再跑去 GitHub 找安装包。
 
 ---
 
@@ -103,6 +104,11 @@ curl http://127.0.0.1:8080/api/v1/health
 4. 连接 Android 真机或启动模拟器，点击 **Run 'app'** 即可在设备上运行。
 
 首次打开时，首页会自动请求后端 `/api/v1/health` 并显示连接状态。
+
+**App 自更新**：CI 用 `GITHUB_RUN_NUMBER` 注入单调递增的 `versionCode`，并在 latest release 里发布
+`version.json`（含 `version_code` / `sha256` / `size`）。App 启动时请求 `GET /api/v1/app/update`，
+发现更高版本后经 `GET /api/v1/app/download` 下载（后端代理 GitHub，避免国内直连失败），
+校验 SHA-256 后通过 FileProvider 拉起系统安装器。「我的 → 检查更新」可手动触发。
 
 ### 4. 常用检查命令
 
@@ -254,6 +260,10 @@ S3_ENDPOINT=your_s3_endpoint
 S3_ACCESS_KEY=your_access_key
 S3_SECRET_KEY=your_secret_key
 S3_BUCKET=wanli-assets
+
+# App 自更新：读取 latest release 的 version.json 并代理下载 APK
+APP_UPDATE_BASE_URL=https://github.com/liliuli808/wanli/releases/download/latest
+APP_UPDATE_CACHE_SECONDS=600
 ```
 
 `BILIBILI_COOKIE` 可选，是服务端兜底的 B 站登录态，用于读取仅登录用户可见的字幕轨。
