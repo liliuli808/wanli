@@ -2,7 +2,6 @@ package com.wanli.android.presentation.main
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -61,8 +60,7 @@ fun ImportSheetContent(
 ) {
     val busy = importState is ImportUiState.Submitting || importState is ImportUiState.Polling
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
-        SheetHandle()
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
         Text("导入新菜谱", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(6.dp))
         Text(
@@ -155,18 +153,6 @@ fun ImportSheetContent(
         )
         Spacer(Modifier.height(24.dp))
     }
-}
-
-@Composable
-private fun SheetHandle() {
-    Box(
-        modifier = Modifier
-            .padding(top = 8.dp)
-            .width(40.dp)
-            .height(4.dp)
-            .clip(CircleShape)
-            .background(OutlineWarm),
-    )
 }
 
 @Composable

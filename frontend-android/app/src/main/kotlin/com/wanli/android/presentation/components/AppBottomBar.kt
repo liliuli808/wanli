@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -55,7 +56,13 @@ fun AppBottomBar(
     centerIcon: ImageVector = Icons.Filled.Add,
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth().background(CardWhite)) {
+        // 白色底延伸到手势条之下，内容整体上移到系统导航栏之上
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .background(CardWhite)
+                .navigationBarsPadding()
+        ) {
             HorizontalDivider(thickness = 1.dp, color = OutlineWarm)
             Row(
                 modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 8.dp),

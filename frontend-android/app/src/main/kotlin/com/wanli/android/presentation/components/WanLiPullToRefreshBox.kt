@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 /**
@@ -39,7 +40,8 @@ fun WanLiPullToRefreshBox(
         if (state.isRefreshing) onRefresh()
     }
 
-    Box(modifier.nestedScroll(state.nestedScrollConnection)) {
+    // clipToBounds：指示器闲置时被上移到容器外，不裁剪会在顶栏下方留一个白圆点
+    Box(modifier.nestedScroll(state.nestedScrollConnection).clipToBounds()) {
         content()
         PullToRefreshContainer(
             state = state,

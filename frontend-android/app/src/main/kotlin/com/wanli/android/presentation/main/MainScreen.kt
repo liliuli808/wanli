@@ -1,7 +1,9 @@
 package com.wanli.android.presentation.main
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +47,7 @@ import androidx.navigation.compose.rememberNavController
 import com.wanli.android.presentation.MainViewModel
 import com.wanli.android.presentation.components.AppBottomBar
 import com.wanli.android.presentation.components.BottomTab
+import com.wanli.android.presentation.components.WanLiTopBar
 import com.wanli.android.presentation.discover.DiscoverScreen
 import com.wanli.android.presentation.home.HomeScreen
 import com.wanli.android.presentation.home.ImportViewModel
@@ -137,7 +140,7 @@ fun MainScreen(
                 if (isLoggedIn) {
                     MessagesScreen(onOpenRecipe = onOpenRecipe)
                 } else {
-                    LoginRequired(onLogin = onNavigateToLogin)
+                    LoginRequired(onLogin = onNavigateToLogin, title = "消息")
                 }
             }
             composable(MainRoutes.PROFILE) {
@@ -155,7 +158,7 @@ fun MainScreen(
                 if (isLoggedIn) {
                     KitchenScreen(onBack = { navController.popBackStack() })
                 } else {
-                    LoginRequired(onLogin = onNavigateToLogin)
+                    LoginRequired(onLogin = onNavigateToLogin, title = "我的厨房")
                 }
             }
         }
@@ -204,25 +207,32 @@ fun MainScreen(
 @Composable
 private fun LoginRequired(
     onLogin: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    title: String? = null,
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Lock,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(48.dp),
-        )
-        Text(
-            text = "需要登录后查看",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 12.dp),
-        )
-        Button(onClick = onLogin, modifier = Modifier.padding(top = 16.dp)) {
-            Text("去登录")
+    Column(modifier = modifier.fillMaxSize()) {
+        if (title != null) {
+            WanLiTopBar(title = title)
+        }
+        Column(
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Lock,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(48.dp),
+            )
+            Text(
+                text = "需要登录后查看",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            Button(onClick = onLogin, modifier = Modifier.padding(top = 16.dp)) {
+                Text("去登录")
+            }
         }
     }
 }
