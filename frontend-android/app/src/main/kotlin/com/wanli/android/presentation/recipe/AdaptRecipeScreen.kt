@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -60,7 +61,7 @@ fun AdaptRecipeScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val successState = state as? AdaptRecipeUiState.Success
     Scaffold(
-        topBar = { WanLiTopBar(title = "适配我的厨房", onBack = onBack) },
+        topBar = { WanLiTopBar(title = "适配我的厨房", onBack = onBack, modifier = Modifier.statusBarsPadding()) },
         bottomBar = {
             if (successState != null) {
                 AdaptResultBottomBar(

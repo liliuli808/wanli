@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -50,7 +51,8 @@ fun RecipeEditScreen(
         topBar = {
             WanLiTopBar(
                 title = if (isCorrection) "来源纠错" else "派生改编",
-                onBack = onBack
+                onBack = onBack,
+                modifier = Modifier.statusBarsPadding(),
             )
         }
     ) { padding ->

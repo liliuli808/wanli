@@ -3,6 +3,7 @@ package com.wanli.android.presentation.recipe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -350,7 +352,7 @@ private fun RecipeDetailContent(
             val canDerive = detail.is_public && detail.version_type != "KITCHEN_FIT"
             val actions = buildList<Pair<String, () -> Unit>> {
                 if (canDerive) {
-                    add("适配我的厨房" to { onAdapt(detail.id) })
+                    add("厨房适配" to { onAdapt(detail.id) })
                 }
                 if (detail.is_public && detail.version_type == "SOURCE") {
                     add("提交纠错" to { onCorrection(detail.id) })
@@ -369,9 +371,15 @@ private fun RecipeDetailContent(
                     actions.forEach { (label, action) ->
                         OutlinedButton(
                             onClick = action,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(horizontal = 8.dp),
                         ) {
-                            Text(label, style = MaterialTheme.typography.labelMedium)
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }

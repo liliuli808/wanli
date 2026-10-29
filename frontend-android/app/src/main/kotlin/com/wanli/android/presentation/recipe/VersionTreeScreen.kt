@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -54,7 +55,7 @@ fun VersionTreeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = { WanLiTopBar(title = "版本派生树", onBack = onBack) }
+        topBar = { WanLiTopBar(title = "版本派生树", onBack = onBack, modifier = Modifier.statusBarsPadding()) }
     ) { padding ->
         WanLiPullToRefreshBox(
             isRefreshing = state is VersionTreeUiState.Loading,

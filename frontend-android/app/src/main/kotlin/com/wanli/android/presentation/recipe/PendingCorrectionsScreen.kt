@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -42,7 +43,7 @@ fun PendingCorrectionsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val rejectionReasons = remember { mutableStateMapOf<String, String>() }
     Scaffold(
-        topBar = { WanLiTopBar(title = "待审核纠错", onBack = onBack) }
+        topBar = { WanLiTopBar(title = "待审核纠错", onBack = onBack, modifier = Modifier.statusBarsPadding()) }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (val current = state) {

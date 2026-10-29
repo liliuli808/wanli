@@ -25,15 +25,18 @@ import com.wanli.android.presentation.theme.WarmShadow
  * 「碗里」统一顶栏。
  * @param onBack 传入时显示返回按钮；为 null 时作为一级页面标题栏。
  * @param actions 右侧操作区（如铃铛按钮）。
+ * @param modifier 根级页面（不经 MainScreen 的 Scaffold）需传 `Modifier.statusBarsPadding()`，
+ *   否则标题会压到状态栏下面。
  */
 @Composable
 fun WanLiTopBar(
     title: String,
     onBack: (() -> Unit)? = null,
     actions: (@Composable () -> Unit)? = null,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

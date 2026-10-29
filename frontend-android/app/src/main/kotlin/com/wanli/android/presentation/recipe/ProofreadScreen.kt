@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -70,7 +71,7 @@ fun ProofreadScreen(
     }
 
     Scaffold(
-        topBar = { WanLiTopBar(title = "校对菜谱", onBack = onBack) },
+        topBar = { WanLiTopBar(title = "校对菜谱", onBack = onBack, modifier = Modifier.statusBarsPadding()) },
         bottomBar = {
             val state = uiState as? ProofreadUiState.Editing
             if (state != null) {

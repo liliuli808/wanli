@@ -136,6 +136,7 @@ fun CommunitySection(
                     onValueChange = { comment = it },
                     label = { Text("分享你的做法或建议") },
                     minLines = 2,
+                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Button(
@@ -220,6 +221,7 @@ private fun CookingRecordDialog(
                     onValueChange = { feedback = it },
                     label = { Text("制作心得（可选）") },
                     minLines = 2,
+                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedButton(

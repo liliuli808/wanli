@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -39,7 +40,7 @@ fun MyAdaptationsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = { WanLiTopBar(title = "我的适配版", onBack = onBack) }
+        topBar = { WanLiTopBar(title = "我的适配版", onBack = onBack, modifier = Modifier.statusBarsPadding()) }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (val current = state) {

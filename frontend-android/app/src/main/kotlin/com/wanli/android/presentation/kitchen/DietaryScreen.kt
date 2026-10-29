@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -60,7 +61,7 @@ fun DietaryScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { WanLiTopBar(title = "忌口管理", onBack = onBack) }
+        topBar = { WanLiTopBar(title = "忌口管理", onBack = onBack, modifier = Modifier.statusBarsPadding()) }
     ) { padding ->
         WanLiPullToRefreshBox(
             isRefreshing = uiState is DietaryUiState.Loading,
