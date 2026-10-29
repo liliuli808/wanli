@@ -15,6 +15,10 @@ interface ApiService {
     @GET("health")
     suspend fun health(): HealthResponse
 
+    /** 最新版本信息（服务端代理 GitHub Releases）。 */
+    @GET("app/update")
+    suspend fun getAppUpdate(): AppUpdateResponse
+
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): LoginResponse
 
@@ -168,6 +172,24 @@ data class HealthResponse(
 @Serializable
 data class HealthData(
     val status: String
+)
+
+@Serializable
+data class AppUpdateResponse(
+    val success: Boolean,
+    val data: AppUpdateData? = null,
+    val error: ErrorBody? = null,
+)
+
+@Serializable
+data class AppUpdateData(
+    @SerialName("version_code") val versionCode: Int,
+    @SerialName("version_name") val versionName: String,
+    val size: Long = 0,
+    val sha256: String = "",
+    val commit: String = "",
+    @SerialName("published_at") val publishedAt: String? = null,
+    @SerialName("download_path") val downloadPath: String,
 )
 
 @Serializable

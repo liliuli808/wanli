@@ -21,6 +21,16 @@ type Config struct {
 	Bilibili  BilibiliConfig
 	Turnstile TurnstileConfig
 	Auth      AuthConfig
+	AppUpdate AppUpdateConfig
+}
+
+// AppUpdateConfig 控制 App 自更新接口的上游来源。
+type AppUpdateConfig struct {
+	// BaseURL 是 latest release 的资产目录，如
+	// https://github.com/liliuli808/wanli/releases/download/latest
+	BaseURL string
+	// CacheSeconds 是 version.json 的缓存秒数，避免每次启动都打 GitHub。
+	CacheSeconds int
 }
 
 type ServerConfig struct {
@@ -215,6 +225,8 @@ func Load() (*Config, error) {
 	v.SetDefault("AUTH_LOCKOUT_MINUTES", 15)
 	v.SetDefault("AUTH_REGISTER_MAX_PER_HOUR", 10)
 	v.SetDefault("TURNSTILE_ENABLED", false)
+	v.SetDefault("APP_UPDATE_BASE_URL", "https://github.com/liliuli808/wanli/releases/download/latest")
+	v.SetDefault("APP_UPDATE_CACHE_SECONDS", 600)
 	v.SetDefault("AI_BASE_URL", "https://api.deepseek.com/v1")
 	v.SetDefault("AI_MODEL", "deepseek-chat")
 	v.SetDefault("AI_POOL_COOLDOWN_SECONDS", 60)
@@ -276,6 +288,10 @@ func Load() (*Config, error) {
 			MaxFailures:        v.GetInt("AUTH_MAX_FAILURES"),
 			LockoutMinutes:     v.GetInt("AUTH_LOCKOUT_MINUTES"),
 			RegisterMaxPerHour: v.GetInt("AUTH_REGISTER_MAX_PER_HOUR"),
+		},
+		AppUpdate: AppUpdateConfig{
+			BaseURL:      v.GetString("APP_UPDATE_BASE_URL"),
+			CacheSeconds: v.GetInt("APP_UPDATE_CACHE_SECONDS"),
 		},
 	}, nil
 }

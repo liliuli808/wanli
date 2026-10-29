@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material.icons.outlined.RateReview
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -75,6 +76,7 @@ fun ProfileScreen(
     onOpenDietary: () -> Unit = {},
     onOpenKitchen: () -> Unit = {},
     onOpenBilibiliAuth: () -> Unit = {},
+    onCheckForUpdate: () -> Unit = {},
 ) {
     Scaffold(
         topBar = { WanLiTopBar(title = "我的") }
@@ -98,6 +100,7 @@ fun ProfileScreen(
             onOpenDietary = onOpenDietary,
             onOpenKitchen = onOpenKitchen,
             onOpenBilibiliAuth = onOpenBilibiliAuth,
+            onCheckForUpdate = onCheckForUpdate,
             padding = padding,
         )
     }
@@ -111,6 +114,7 @@ private fun LoggedInProfile(
     onOpenDietary: () -> Unit,
     onOpenKitchen: () -> Unit,
     onOpenBilibiliAuth: () -> Unit,
+    onCheckForUpdate: () -> Unit,
     padding: PaddingValues,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
@@ -147,6 +151,7 @@ private fun LoggedInProfile(
                 onOpenDietary = onOpenDietary,
                 onOpenKitchen = onOpenKitchen,
                 onOpenBilibiliAuth = onOpenBilibiliAuth,
+                onCheckForUpdate = onCheckForUpdate,
                 onUpdateNickname = viewModel::updateNickname,
             )
         }
@@ -162,6 +167,7 @@ private fun ProfileContent(
     onOpenDietary: () -> Unit,
     onOpenKitchen: () -> Unit,
     onOpenBilibiliAuth: () -> Unit,
+    onCheckForUpdate: () -> Unit,
     onUpdateNickname: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -235,6 +241,8 @@ private fun ProfileContent(
                 MenuRow(icon = Icons.Outlined.Shield, title = "忌口管理", onClick = onOpenDietary)
                 MenuDivider()
                 MenuRow(icon = Icons.Outlined.PlayCircleOutline, title = "B 站账号", onClick = onOpenBilibiliAuth)
+                MenuDivider()
+                MenuRow(icon = Icons.Outlined.SystemUpdate, title = "检查更新", onClick = onCheckForUpdate)
             }
         }
 

@@ -19,6 +19,8 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.io.IOException
 import java.util.Properties
+import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -65,6 +67,21 @@ object NetworkModule {
                 chain.proceed(newRequest)
             }
             .addInterceptor(logging)
+            .build()
+    }
+
+    /**
+     * 下载 APK 专用客户端：不挂日志拦截器（BODY 级别会把整个安装包读进内存并打印），
+     * 也不挂鉴权拦截器。读超时放宽到 60s 以适配大文件。
+     */
+    @Provides
+    @Singleton
+    @Named("download")
+    fun provideDownloadClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
             .build()
     }
 

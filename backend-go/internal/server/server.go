@@ -211,6 +211,13 @@ func New(
 		logger.Warn("redis or database not available, video import disabled")
 	}
 
+	// App 自更新：后端代理 GitHub Releases，客户端只访问自己的 API 域名
+	appUpdateService := service.NewAppUpdateService(
+		cfg.AppUpdate.BaseURL,
+		time.Duration(cfg.AppUpdate.CacheSeconds)*time.Second,
+	)
+	appUpdateHandler := handler.NewAppUpdateHandler(appUpdateService)
+
 	// 路由注册
 	registerRoutes(
 		router,
@@ -225,6 +232,7 @@ func New(
 		uploadHandler,
 		messageHandler,
 		bilibiliCredentialHandler,
+		appUpdateHandler,
 	)
 
 	return &Server{
@@ -251,6 +259,7 @@ func registerRoutes(
 	uploadHandler *handler.UploadHandler,
 	messageHandler *handler.MessageHandler,
 	bilibiliCredentialHandler *handler.BilibiliCredentialHandler,
+	appUpdateHandler *handler.AppUpdateHandler,
 ) {
 	// 人机验证（Turnstile）组件页面，供 Android WebView 加载
 	r.GET("/captcha", authHandler.CaptchaWidget)
@@ -258,6 +267,12 @@ func registerRoutes(
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/health", healthHandler.Health)
+
+		// App 自更新（允许游客：启动即检查，不要求登录）
+		if appUpdateHandler != nil {
+			v1.GET("/app/update", appUpdateHandler.Check)
+			v1.GET("/app/download", appUpdateHandler.Download)
+		}
 
 		// 认证（允许游客）
 		v1.POST("/auth/register", authHandler.Register)

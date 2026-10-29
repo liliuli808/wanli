@@ -81,6 +81,7 @@ fun MainScreen(
     onOpenMyAdaptations: () -> Unit = {},
     onOpenDietary: () -> Unit = {},
     onOpenBilibiliAuth: () -> Unit = {},
+    onCheckForUpdate: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
     viewModel: MainViewModel = hiltViewModel(),
     importViewModel: ImportViewModel = hiltViewModel(),
@@ -154,6 +155,7 @@ fun MainScreen(
                     onOpenDietary = onOpenDietary,
                     onOpenKitchen = { navController.navigate(MainRoutes.KITCHEN) },
                     onOpenBilibiliAuth = onOpenBilibiliAuth,
+                    onCheckForUpdate = onCheckForUpdate,
                 )
             }
             composable(MainRoutes.KITCHEN) {

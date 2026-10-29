@@ -44,7 +44,8 @@ object Routes {
 @Composable
 fun WanLiNavHost(
     navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCheckForUpdate: () -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -59,7 +60,8 @@ fun WanLiNavHost(
                 onOpenPendingCorrections = { navController.navigate(Routes.PENDING_CORRECTIONS) },
                 onOpenMyAdaptations = { navController.navigate(Routes.MY_ADAPTATIONS) },
                 onOpenDietary = { navController.navigate(Routes.DIETARY) },
-                onOpenBilibiliAuth = { navController.navigate(Routes.BILIBILI_AUTH) }
+                onOpenBilibiliAuth = { navController.navigate(Routes.BILIBILI_AUTH) },
+                onCheckForUpdate = onCheckForUpdate,
             )
         }
         composable(Routes.LOGIN) {

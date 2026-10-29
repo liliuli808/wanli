@@ -581,3 +581,44 @@
 - **Headers**: `Authorization: Bearer <token>`
 - **说明**：聚合四类事件——他人对我版本的评论（`comment`）、他人对我版本的“做过”（`cooking_record`）、我的纠错审核结果（`correction_reviewed`）、他人提交给我的待审核纠错（`correction_pending`），按时间倒序返回，每类取最近 50 条，合并后截断为 50 条。
 - **返回**：`200 OK`，`items` 每项含 `type`, `id`, `actor_nickname`, `text`, `rating`, `recipe_version_id`, `recipe_title`, `created_at`。
+
+---
+
+### 2.9 App 自更新 (App Update)
+
+#### 1. 查询最新版本
+- **请求**：`GET /api/v1/app/update`
+- **Headers**: 无需登录
+- **说明**：服务端读取 CI 发布到 GitHub Releases 的 `version.json`（缓存 10 分钟，可在 `APP_UPDATE_CACHE_SECONDS` 调整）。
+  客户端用 `version_code` 与本地 `BuildConfig.VERSION_CODE` 比较，大于本地版本才提示更新。
+  上游不可用时返回 503 `APP_UPDATE_UNAVAILABLE`，客户端应静默忽略（自动检查）或提示稍后再试（手动检查）。
+- **返回**：`200 OK`
+  ```json
+  {
+    "success": true,
+    "data": {
+      "version_code": 42,
+      "version_name": "0.0.42",
+      "size": 12345678,
+      "sha256": "…",
+      "commit": "d830e28",
+      "published_at": "2026-10-29T00:00:00Z",
+      "download_path": "/api/v1/app/download"
+    }
+  }
+  ```
+
+#### 2. 下载最新安装包
+- **请求**：`GET /api/v1/app/download`
+- **Headers**: 无需登录
+- **说明**：后端代理 GitHub Releases 的 APK，`Content-Type: application/vnd.android.package-archive`。
+  走代理而不是让客户端直连 GitHub，是为了规避国内网络访问 Releases 不稳定。
+  客户端下载完成后应按 `sha256` 校验，再通过 FileProvider 拉起系统安装器。
+- **返回**：`200 OK`（二进制流）
+
+**相关配置**
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `APP_UPDATE_BASE_URL` | `https://github.com/liliuli808/wanli/releases/download/latest` | latest release 资产目录 |
+| `APP_UPDATE_CACHE_SECONDS` | `600` | `version.json` 缓存秒数 |

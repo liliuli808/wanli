@@ -17,8 +17,10 @@ android {
         applicationId = "com.wanli.android"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        // CI 通过 -Pwanli.versionCode / -Pwanli.versionName 注入；
+        // 本地构建回落到固定值，便于调试
+        versionCode = providers.gradleProperty("wanli.versionCode").orNull?.toIntOrNull() ?: 1
+        versionName = providers.gradleProperty("wanli.versionName").orNull ?: "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

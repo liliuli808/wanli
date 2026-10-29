@@ -63,17 +63,58 @@ jobs:
             echo "::warning::未配置签名 secrets，release 包将使用 debug 签名"
           fi
 
+      # 版本号：tag 用 tag 名（去掉 v），main 用递增的 run_number，
+      # 保证每次构建的 versionCode 单调递增，App 才能判断“有新版本”
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            NAME="${GITHUB_REF_NAME#v}"
+          else
+            NAME="0.0.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "code=${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "版本：$NAME ($GITHUB_RUN_NUMBER)"
+
       - name: Unit tests
         run: ./gradlew :app:testDebugUnitTest --no-daemon --stacktrace
 
       - name: Build release APK
-        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
+        run: |
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace \
+            -Pwanli.versionCode=${{ steps.version.outputs.code }} \
+            -Pwanli.versionName=${{ steps.version.outputs.name }}
 
       - name: Collect APK
         run: |
+          set -euo pipefail
           mkdir -p out
-          cp app/build/outputs/apk/release/app-release.apk \
-            "out/wanli-${GITHUB_REF_NAME//\//-}-${GITHUB_SHA::7}.apk"
+          APK="wanli-${GITHUB_REF_NAME//\//-}-${GITHUB_SHA::7}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "out/$APK"
+          cp "out/$APK" out/wanli-latest.apk
+
+          SHA256=$(sha256sum "out/$APK" | cut -d' ' -f1)
+          SIZE=$(stat -c %s "out/$APK")
+          # latest 通道只保留滚动文件名，避免每次构建堆积资源
+          if [[ "$GITHUB_REF" == refs/heads/main ]]; then
+            ASSET="wanli-latest.apk"
+          else
+            ASSET="$APK"
+          fi
+          cat > out/version.json <<EOF
+          {
+            "version_code": ${{ steps.version.outputs.code }},
+            "version_name": "${{ steps.version.outputs.name }}",
+            "asset": "$ASSET",
+            "sha256": "$SHA256",
+            "size": $SIZE,
+            "commit": "${GITHUB_SHA::7}",
+            "published_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat out/version.json
           ls -lh out
 
       - name: Upload APK
@@ -92,12 +133,11 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            gh release create "$GITHUB_REF_NAME" out/*.apk \
+            gh release create "$GITHUB_REF_NAME" out/wanli-*.apk out/version.json \
               --title "$GITHUB_REF_NAME" \
               --notes "自动构建：$GITHUB_REF_NAME（${GITHUB_SHA::7}）" \
               --verify-tag
           elif [[ "$GITHUB_REF" == refs/heads/main ]]; then
-            cp out/*.apk out/wanli-latest.apk
             if ! gh release view latest >/dev/null 2>&1; then
               gh release create latest \
                 --target "$GITHUB_SHA" \
@@ -105,7 +145,7 @@ jobs:
                 --prerelease \
                 --notes "跟随 main 分支最新提交自动构建。"
             fi
-            gh release upload latest out/wanli-latest.apk --clobber
+            gh release upload latest out/wanli-latest.apk out/version.json --clobber
             gh release edit latest \
               --target "$GITHUB_SHA" \
               --notes "跟随 main 分支最新提交自动构建：${GITHUB_SHA::7}"
