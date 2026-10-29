@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/wanli/backend-go/internal/model"
 )
@@ -62,8 +61,10 @@ type Client struct {
 }
 
 // New 创建 AI 客户端。baseURL 形如 https://api.deepseek.com/v1。
+// 不设 http.Client.Timeout：推理模型（如 conatus）单次调用可能远超分钟级，
+// 由调用方 ctx 控制取消；Pool 的轮询在各端点顺序等待，同样依赖 ctx。
 func New(apiKey, baseURL, model string) *Client {
-	return NewWithHTTPClient(apiKey, baseURL, model, &http.Client{Timeout: 120 * time.Second})
+	return NewWithHTTPClient(apiKey, baseURL, model, &http.Client{})
 }
 
 // NewWithHTTPClient 创建使用自定义 http.Client 的 AI 客户端（便于测试注入）。
@@ -80,6 +81,11 @@ type chatMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
+
+// maxOutputTokens 是单次请求的输出上限。推理类模型（如 conatus）会先在 content 里
+// 写思考过程再给 JSON，4096 在长字幕视频上会被思考耗尽、finish_reason=length
+// 导致 content 为空或截断，故留足余量。
+const maxOutputTokens = 16384
 
 type chatCompletionRequest struct {
 	Model       string        `json:"model"`
@@ -118,7 +124,7 @@ func (c *Client) ExtractRecipe(ctx context.Context, input ParseInput) (*model.Pa
 			{Role: "system", Content: parseSystemPrompt},
 			{Role: "user", Content: string(userContent)},
 		},
-		MaxTokens:   4096,
+		MaxTokens:   maxOutputTokens,
 		Temperature: 0.1, // 低温度，减少编造
 	}
 
@@ -156,7 +162,7 @@ func (c *Client) AdaptRecipe(ctx context.Context, input AdaptationInput) (*model
 			{Role: "system", Content: adaptationSystemPrompt},
 			{Role: "user", Content: string(userContent)},
 		},
-		MaxTokens:   4096,
+		MaxTokens:   maxOutputTokens,
 		Temperature: 0.1,
 	}
 	resp, err := c.callAPI(ctx, reqBody)
