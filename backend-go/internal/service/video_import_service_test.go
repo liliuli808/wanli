@@ -27,6 +27,8 @@ type fakeRecipeRepo struct {
 	mu           sync.Mutex
 	videoSources map[string]*model.VideoSource
 	recipesByVS  map[uuid.UUID]uuid.UUID
+	recipes      map[uuid.UUID]*model.Recipe
+	drafts       []repository.UserSourceDraft
 	saved        []repository.SourceDraftParams
 	nextVersion  uuid.UUID
 }
@@ -35,6 +37,7 @@ func newFakeRecipeRepo() *fakeRecipeRepo {
 	return &fakeRecipeRepo{
 		videoSources: map[string]*model.VideoSource{},
 		recipesByVS:  map[uuid.UUID]uuid.UUID{},
+		recipes:      map[uuid.UUID]*model.Recipe{},
 		nextVersion:  uuid.New(),
 	}
 }
@@ -78,8 +81,16 @@ func (r *fakeRecipeRepo) ListPublicRecipes(context.Context, string, int, int) ([
 	return nil, 0, nil
 }
 
-func (r *fakeRecipeRepo) FindRecipeByID(context.Context, uuid.UUID) (*model.Recipe, error) {
-	return nil, nil
+func (r *fakeRecipeRepo) FindRecipeByID(_ context.Context, recipeID uuid.UUID) (*model.Recipe, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.recipes[recipeID], nil
+}
+
+func (r *fakeRecipeRepo) ListUserSourceDrafts(context.Context, uuid.UUID) ([]repository.UserSourceDraft, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.drafts, nil
 }
 
 func (r *fakeRecipeRepo) ListPublicVersionsByRecipe(context.Context, uuid.UUID) ([]repository.VersionTreeNode, error) {
@@ -361,6 +372,7 @@ func TestVideoImport_Submit_Duplicate(t *testing.T) {
 	recipeID := uuid.New()
 	repo.videoSources["BV1xx411c7xx"] = &model.VideoSource{ID: vsID, BVID: "BV1xx411c7xx"}
 	repo.recipesByVS[vsID] = recipeID
+	repo.recipes[recipeID] = &model.Recipe{ID: recipeID, Status: model.ContentStatusActive}
 
 	svc := newImportService(t, "http://unused", "http://unused", repo, &noopSubmitter{})
 
@@ -368,6 +380,47 @@ func TestVideoImport_Submit_Duplicate(t *testing.T) {
 	var dup *DuplicateVideoError
 	require.True(t, errors.As(err, &dup), "应返回重复错误")
 	assert.Equal(t, recipeID, dup.RecipeID)
+	assert.Nil(t, dup.VersionID, "没有公开版本时不给 version_id")
+}
+
+func TestVideoImport_Submit_DuplicateOwnDraftReturnsDraftVersion(t *testing.T) {
+	// 自己导入的草稿还没发布：再次导入要带上草稿 version_id，客户端才能跳去校对页
+	repo := newFakeRecipeRepo()
+	userID := uuid.New()
+	vsID := uuid.New()
+	recipeID := uuid.New()
+	draftID := uuid.New()
+	repo.videoSources["BV1xx411c7xx"] = &model.VideoSource{ID: vsID, BVID: "BV1xx411c7xx"}
+	repo.recipesByVS[vsID] = recipeID
+	repo.recipes[recipeID] = &model.Recipe{ID: recipeID, CreatorID: &userID, Status: model.ContentStatusActive}
+	repo.drafts = []repository.UserSourceDraft{{VersionID: draftID, RecipeID: recipeID, Title: "番茄炒蛋"}}
+
+	svc := newImportService(t, "http://unused", "http://unused", repo, &noopSubmitter{})
+
+	_, err := svc.Submit(context.Background(), userID, "https://www.bilibili.com/video/BV1xx411c7xx/")
+	var dup *DuplicateVideoError
+	require.True(t, errors.As(err, &dup))
+	require.NotNil(t, dup.VersionID, "自己的草稿应带回 version_id")
+	assert.Equal(t, draftID, *dup.VersionID)
+}
+
+func TestVideoImport_Submit_DuplicateOthersDraftHasNoVersion(t *testing.T) {
+	// 别人的草稿不暴露 version_id（草稿仅作者可见）
+	repo := newFakeRecipeRepo()
+	ownerID := uuid.New()
+	vsID := uuid.New()
+	recipeID := uuid.New()
+	repo.videoSources["BV1xx411c7xx"] = &model.VideoSource{ID: vsID, BVID: "BV1xx411c7xx"}
+	repo.recipesByVS[vsID] = recipeID
+	repo.recipes[recipeID] = &model.Recipe{ID: recipeID, CreatorID: &ownerID, Status: model.ContentStatusActive}
+	repo.drafts = []repository.UserSourceDraft{{VersionID: uuid.New(), RecipeID: recipeID}}
+
+	svc := newImportService(t, "http://unused", "http://unused", repo, &noopSubmitter{})
+
+	_, err := svc.Submit(context.Background(), uuid.New(), "https://www.bilibili.com/video/BV1xx411c7xx/")
+	var dup *DuplicateVideoError
+	require.True(t, errors.As(err, &dup))
+	assert.Nil(t, dup.VersionID)
 }
 
 func TestVideoImport_Submit_Success(t *testing.T) {

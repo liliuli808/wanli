@@ -254,6 +254,35 @@ func (h *RecipeHandler) ListRecipes(c *gin.Context) {
 	})
 }
 
+// ListMyDrafts 获取当前用户待校对的解析草稿。GET /api/v1/me/recipe-drafts
+func (h *RecipeHandler) ListMyDrafts(c *gin.Context) {
+	userID, appErr := currentUserID(c)
+	if appErr != nil {
+		response.Fail(c, appErr)
+		return
+	}
+
+	drafts, err := h.recipeService.ListMySourceDrafts(c.Request.Context(), userID)
+	if err != nil {
+		failRecipeError(c, err)
+		return
+	}
+
+	list := make([]gin.H, 0, len(drafts))
+	for _, d := range drafts {
+		list = append(list, gin.H{
+			"recipe_id":         d.RecipeID.String(),
+			"recipe_version_id": d.VersionID.String(),
+			"title":             d.Title,
+			"bvid":              d.BVID,
+			"cover_url":         d.CoverURL,
+			"video_status":      d.VideoStatus,
+			"created_at":        d.CreatedAt,
+		})
+	}
+	response.Ok(c, gin.H{"items": list})
+}
+
 // GetVersionTree 获取菜谱版本派生树。GET /api/v1/recipes/:id/version-tree
 func (h *RecipeHandler) GetVersionTree(c *gin.Context) {
 	recipeID, appErr := parseUUIDParam(c, "id")

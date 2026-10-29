@@ -67,6 +67,17 @@ type VersionTreeNode struct {
 	CreatedAt      time.Time
 }
 
+// UserSourceDraft 是用户自己导入、尚未发布的 SOURCE 草稿（「我的菜谱」列表项）。
+type UserSourceDraft struct {
+	VersionID   uuid.UUID
+	Title       string
+	BVID        string
+	CoverURL    *string
+	CreatedAt   time.Time
+	RecipeID    uuid.UUID
+	VideoStatus string // 视频来源失效时可用于提示；来源记录缺失时为 EXPIRED
+}
+
 // 公开菜谱列表排序方式。
 const (
 	RecipeSortLatest  = "latest"
@@ -77,8 +88,10 @@ const (
 type RecipeRepository interface {
 	// FindVideoSourceByBVID 按 BVID 查询视频来源；不存在时返回 (nil, nil)。
 	FindVideoSourceByBVID(ctx context.Context, bvid string) (*model.VideoSource, error)
-	// FindRecipeIDByVideoSourceID 查询视频来源关联的菜谱 ID；不存在时返回 (nil, nil)。
+	// FindRecipeIDByVideoSourceID 查询视频来源关联的未下架菜谱 ID；不存在时返回 (nil, nil)。
 	FindRecipeIDByVideoSourceID(ctx context.Context, videoSourceID uuid.UUID) (*uuid.UUID, error)
+	// ListUserSourceDrafts 查询指定用户导入、尚未发布的 SOURCE 草稿（按创建时间倒序）。
+	ListUserSourceDrafts(ctx context.Context, authorID uuid.UUID) ([]UserSourceDraft, error)
 	// SaveSourceDraft 在一个事务中保存视频来源、菜谱与 SOURCE 草稿版本（含食材与步骤）。
 	SaveSourceDraft(ctx context.Context, params SourceDraftParams) (*model.RecipeVersion, error)
 	// FindVersionDetail 查询版本完整聚合；不存在时返回 (nil, nil)。
@@ -129,9 +142,11 @@ func (r *GormRecipeRepository) FindVideoSourceByBVID(ctx context.Context, bvid s
 	return &source, nil
 }
 
+// FindRecipeIDByVideoSourceID 只返回未下架（ACTIVE）菜谱的 ID，避免已下架的菜谱长期占用 BVID。
 func (r *GormRecipeRepository) FindRecipeIDByVideoSourceID(ctx context.Context, videoSourceID uuid.UUID) (*uuid.UUID, error) {
 	var recipe model.Recipe
-	err := r.db.WithContext(ctx).Select("id").First(&recipe, "video_source_id = ?", videoSourceID).Error
+	err := r.db.WithContext(ctx).Select("id").
+		First(&recipe, "video_source_id = ? AND status = ?", videoSourceID, model.ContentStatusActive).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -139,6 +154,26 @@ func (r *GormRecipeRepository) FindRecipeIDByVideoSourceID(ctx context.Context, 
 		return nil, fmt.Errorf("find recipe by video source: %w", err)
 	}
 	return &recipe.ID, nil
+}
+
+func (r *GormRecipeRepository) ListUserSourceDrafts(ctx context.Context, authorID uuid.UUID) ([]UserSourceDraft, error) {
+	var rows []UserSourceDraft
+	err := r.db.WithContext(ctx).
+		Table("recipe_versions AS v").
+		Select(`v.id AS version_id, v.title, v.recipe_id, v.created_at,
+			COALESCE(vs.bvid, '') AS bvid,
+			vs.cover_url,
+			COALESCE(vs.status, 'EXPIRED') AS video_status`).
+		Joins("JOIN recipes r ON r.id = v.recipe_id").
+		Joins("LEFT JOIN video_sources vs ON vs.id = r.video_source_id").
+		Where("v.author_id = ? AND v.version_type = ? AND v.is_public = FALSE AND v.status = ? AND r.status = ?",
+			authorID, model.VersionTypeSource, model.ContentStatusActive, model.ContentStatusActive).
+		Order("v.created_at DESC").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("list user source drafts: %w", err)
+	}
+	return rows, nil
 }
 
 func (r *GormRecipeRepository) SaveSourceDraft(ctx context.Context, params SourceDraftParams) (*model.RecipeVersion, error) {

@@ -128,6 +128,13 @@ func (s *RecipeService) ListPublicRecipes(ctx context.Context, sort string, page
 	return s.repo.ListPublicRecipes(ctx, sort, (page-1)*pageSize, pageSize)
 }
 
+// ListMySourceDrafts 查询当前用户导入、尚未发布的 SOURCE 草稿。
+// 解析成功即写库，草稿不公开、也不会出现在发现页；没有这个入口用户就再也找不回
+// 自己解析的结果，因此单列一个「我的菜谱（待校对）」列表。
+func (s *RecipeService) ListMySourceDrafts(ctx context.Context, userID uuid.UUID) ([]repository.UserSourceDraft, error) {
+	return s.repo.ListUserSourceDrafts(ctx, userID)
+}
+
 // GetVersionTree 查询菜谱的公开版本派生树（游客可浏览）。
 func (s *RecipeService) GetVersionTree(ctx context.Context, recipeID uuid.UUID) ([]repository.VersionTreeNode, error) {
 	recipe, err := s.repo.FindRecipeByID(ctx, recipeID)
