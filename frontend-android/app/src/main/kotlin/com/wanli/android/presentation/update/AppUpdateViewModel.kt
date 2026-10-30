@@ -59,10 +59,12 @@ class AppUpdateViewModel @Inject constructor(
     }
 
     /**
-     * @param manual 用户主动点击「检查更新」：显示检查中/已是最新/失败状态。
-     *               自动检查则只在发现新版本时弹窗。
+     * @param manual       用户主动点击「检查更新」：显示检查中/已是最新/失败状态。
+     *                     自动检查则只在发现新版本时弹窗。
+     * @param autoDownload 发现新版本后立即开始下载（「我的 → 检查更新」用），
+     *                     用户不必再点一次「立即更新」；安装仍需系统确认。
      */
-    fun check(manual: Boolean) {
+    fun check(manual: Boolean, autoDownload: Boolean = false) {
         if (checkJob?.isActive == true) return
         checkJob = viewModelScope.launch {
             if (manual) _uiState.value = AppUpdateUiState.Checking
@@ -74,6 +76,9 @@ class AppUpdateViewModel @Inject constructor(
                         info == null -> AppUpdateUiState.Idle
                         !manual && repository.wasDismissedRecently(info.versionCode) -> AppUpdateUiState.Idle
                         else -> AppUpdateUiState.Available(info)
+                    }
+                    if (autoDownload && _uiState.value is AppUpdateUiState.Available) {
+                        download()
                     }
                 }
                 is ApiResult.Error ->

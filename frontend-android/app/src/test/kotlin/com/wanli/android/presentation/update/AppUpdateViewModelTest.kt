@@ -115,6 +115,31 @@ class AppUpdateViewModelTest {
     }
 
     @Test
+    fun `manual check with autoDownload starts download immediately`() = runTest {
+        coEvery { repository.check() } returns ApiResult.Success(newerInfo)
+        val apk = File.createTempFile("wanli-99-auto", ".apk").apply { deleteOnExit() }
+        coEvery { repository.download(newerInfo, any()) } returns ApiResult.Success(apk)
+
+        val viewModel = AppUpdateViewModel(repository)
+        viewModel.check(manual = true, autoDownload = true)
+
+        // 不需要用户再点一次「立即更新」，直接进入 Ready
+        assertEquals(AppUpdateUiState.Ready(newerInfo, apk), viewModel.uiState.value)
+        coVerify(exactly = 1) { repository.download(newerInfo, any()) }
+    }
+
+    @Test
+    fun `manual check without autoDownload waits for user`() = runTest {
+        coEvery { repository.check() } returns ApiResult.Success(newerInfo)
+
+        val viewModel = AppUpdateViewModel(repository)
+        viewModel.check(manual = true)
+
+        assertTrue(viewModel.uiState.value is AppUpdateUiState.Available)
+        coVerify(exactly = 0) { repository.download(any(), any()) }
+    }
+
+    @Test
     fun `dismiss records version and hides dialog`() = runTest {
         coEvery { repository.check() } returns ApiResult.Success(newerInfo)
         val viewModel = AppUpdateViewModel(repository)

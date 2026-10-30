@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
 
                     WanLiNavHost(
                         navController = navController,
-                        onCheckForUpdate = { updateViewModel.check(manual = true) },
+                        onCheckForUpdate = { updateViewModel.check(manual = true, autoDownload = true) },
                     )
 
                     AppUpdateDialog(
