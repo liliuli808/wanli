@@ -105,10 +105,12 @@ curl http://127.0.0.1:8080/api/v1/health
 
 首次打开时，首页会自动请求后端 `/api/v1/health` 并显示连接状态。
 
-**App 自更新**：CI 用 `GITHUB_RUN_NUMBER` 注入单调递增的 `versionCode`，并在 latest release 里发布
-`version.json`（含 `version_code` / `sha256` / `size`）。App 启动时请求 `GET /api/v1/app/update`，
-发现更高版本后经 `GET /api/v1/app/download` 下载（后端代理 GitHub，避免国内直连失败），
-校验 SHA-256 后通过 FileProvider 拉起系统安装器。「我的 → 检查更新」可手动触发。
+**App 自更新**：CI 用提交数（`git rev-list --count HEAD`）注入 `versionCode`，每次提交 +1，
+tag 与 main 共用同一条单调序列；`versionName` 在 main 上为 `1.0.<提交数>`，tag 构建取 tag 名。
+latest release 里发布 `version.json`（含 `version_code` / `sha256` / `size`）。App 启动时请求
+`GET /api/v1/app/update`，发现更高版本后经 `GET /api/v1/app/download` 下载（后端代理 GitHub，
+避免国内直连失败），校验 SHA-256 后通过 FileProvider 拉起系统安装器。
+「我的 → 检查更新」可手动触发，发现新版本会直接开始下载。
 
 ### 4. 常用检查命令
 

@@ -23,8 +23,12 @@ jobs:
         working-directory: frontend-android
 
     steps:
+      # fetch-depth: 0 是必需的：versionCode 取 git rev-list --count HEAD，
+      # 默认的浅克隆（depth=1）会让提交数恒为 1，版本号就不动了。
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v6
@@ -63,20 +67,23 @@ jobs:
             echo "::warning::未配置签名 secrets，release 包将使用 debug 签名"
           fi
 
-      # 版本号：tag 用 tag 名（去掉 v），main 用递增的 run_number，
-      # 保证每次构建的 versionCode 单调递增，App 才能判断“有新版本”
+      # 版本号：versionCode 统一取「提交数」git rev-list --count HEAD，每次提交 +1。
+      # tag 构建与 main 构建共用同一条单调序列：此前用 run_number 时两条序列各自递增，
+      # 出现过 tag 的 versionCode 反而小于之前的 main 构建，导致 latest 通道落后于正式版。
+      # versionName：tag 用 tag 名（去掉 v）；main 用 1.0.<提交数>，每次提交升一个小版本。
       - name: Resolve version
         id: version
         run: |
           set -euo pipefail
+          COUNT=$(git rev-list --count HEAD)
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             NAME="${GITHUB_REF_NAME#v}"
           else
-            NAME="0.0.${GITHUB_RUN_NUMBER}"
+            NAME="1.0.${COUNT}"
           fi
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
-          echo "code=${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-          echo "版本：$NAME ($GITHUB_RUN_NUMBER)"
+          echo "code=${COUNT}" >> "$GITHUB_OUTPUT"
+          echo "版本：$NAME ($COUNT)"
 
       - name: Unit tests
         run: ./gradlew :app:testDebugUnitTest --no-daemon --stacktrace
